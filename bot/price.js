@@ -3,7 +3,7 @@ const { EvmChain } = require("@moralisweb3/common-evm-utils");
 
 const runApp = async () => {
   await Moralis.start({
-    apiKey: "YOUR_API_KEY",
+    apiKey: "jYXhTlq19ZTir7fG2Nvd97gJquT8cu7Qx2Al2L44sXqankJ3ogZR9VZ9Kmw53jQf",
     // ...and any other configuration
   });
 
@@ -11,7 +11,7 @@ const runApp = async () => {
 
   const chain = EvmChain.ARBITRUM;
 
-  const response = await Moralis.EvmApi.token.getTokenPrice({
+  const response = await Moralis.EvmApi.balance.getNativeBalance({
     address,
     chain,
   });

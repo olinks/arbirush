@@ -18,6 +18,9 @@ async function main (){
 
     const contract = new ethers.Contract(arbiRushAddress, arbirushABI, provider);  
     contract.on("Transfer", (from, to, value, event) => {
+        let buyer = "";
+        let no_tokens ="";
+        let usd_value="";
         let info = {
             from :from,
             to: to,
@@ -29,6 +32,7 @@ async function main (){
         console.log(JSON.stringify(info.to, null, 4));
         console.log(JSON.stringify(info.value, null, 4));
         console.log("data =>",JSON.stringify(info.data, null, 4));
+
     })
 }
 
