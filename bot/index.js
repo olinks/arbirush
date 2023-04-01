@@ -47,7 +47,7 @@ async function main (){
     }
 
     function checkWinner (num){
-        if (num = lottery_number){
+        if (num === lottery_number){
             winner();
             // return true;
         }else{
@@ -70,100 +70,112 @@ async function main (){
     contract.on("Transfer", (from, to, value, event) => {
 
         let token_data = "";
-        let listener_from = "";
-        let listener_to = "";
-        let no_tokens ="";
+        let listener_from = from;
+        let listener_to = to;
+        let no_tokens = ethers.utils.formatUnits(value, 18);
         
-        // Using Dexscreener API to fetch price which is gotten from the token data object
-        axios.get("https://api.dexscreener.com/latest/dex/tokens/0xb70c114B20d1EE068Dd4f5F36E301d0B604FEC18")
-        .then((res) => {
-            token_data = res.data.pairs[0];
-            // console.log(token_data);
-        })
-        let usd_value = token_data.priceUsd *1;
-        let eth_value = token_data.priceNative *1;
-        let marketcap = token_data.fdv *1;
-
-
         let info = {
             from :from,
             to: to,
             value: ethers.utils.formatUnits(value, 18),
             data: event,
         };
+        // Using Dexscreener API to fetch price which is gotten from the token data object
+        axios.get("https://api.dexscreener.com/latest/dex/tokens/0xb70c114B20d1EE068Dd4f5F36E301d0B604FEC18")
+        .then((res) => {
+            token_data = res.data.pairs[0];
+            // console.log(token_data);
 
-        // transaction 'from' address
-        listener_from = JSON.stringify(info.from, null, 4);
+            let usd_value = token_data.priceUsd *1.0;
+            let eth_value = token_data.priceNative *1.0;
+            let marketcap = token_data.fdv *1.0;
 
-        // Transaction 'To' address
-        listener_to = JSON.stringify(info.to, null, 4);
+            let eth_spent = no_tokens * eth_value;
+            let usd_spent = no_tokens * usd_value;
 
-        // Transaction Value (number of Arbirush tokens)
-        no_tokens = (JSON.stringify(info.value, null, 4) *1.0);
+            // if the tokens are coming from the Camelot router and not going back to the contract address
+            //  but an actual wallet then its a buy
 
-        let eth_spent = no_tokens * eth_value;
-        let usd_spent = no_tokens * usd_value;
+            if(from == camelot_route && to != arbiRushAddress){
 
-        let bot_data = {
-            eth: eth_spent,
-            no_rush: no_tokens,
-            usd: usd_spent,
-            marketcap: marketcap
-        }
-        // if the tokens are coming from the Camelot router and not going back to the contract address
-        //  but an actual wallet then its a buy
-        if(listener_from === camelot_route && listener_to !== arbiRushAddress){
-            // check if transaction meets the lottery threshold
-            var lottery_value = usd_spent;
-            
-            // $100 => 1%
-            if ((lottery_value >= 100) && (lottery_value <= 200)){
-                console.log("1% buy lottery number =>",randomGen(100));
-            } else 
-            // $200 => 2%
-            if ((lottery_value >= 200) && (lottery_value <= 300)){
-                console.log("2% buy lottery number =>",randomGen(90));
-            } else 
-            // $300 => 3%
-            if ((lottery_value >= 300) && (lottery_value <= 400)){
-                console.log("3% buy lottery number =>",randomGen(80));
-            } else 
-            // $400 => 4%
-            if ((lottery_value >= 400) && (lottery_value <= 500)){
-                console.log("4% buy lottery number =>",randomGen(700));
-            } else 
-            // $500 => 5%
-            if ((lottery_value >= 500) && (lottery_value <= 600)){
-                console.log("5% buy lottery number =>",randomGen(60));
-            }else 
-            // $600 => 6%
-            if ((lottery_value >= 600) && (lottery_value <= 700)){
-                console.log("6% buy lottery number =>",randomGen(50));
-            }else
-            // $700 => 7%
-            if ((lottery_value >= 700) && (lottery_value <= 800)){
-                console.log("7% buy lottery number =>",randomGen(40));
-            }else
-            // $800 => 8%
-            if ((lottery_value >= 800) && (lottery_value <= 900)){
-                console.log("8% buy lottery number =>",randomGen(30));
-            } else
-            // $900 => 9%
-            if ((lottery_value >= 900) && (lottery_value <= 1000)){
-                console.log("9% buy lottery number =>",randomGen(20));
-            }else
-            // $1000 => 10%
-            if ((lottery_value >= 1000) && (lottery_value <= 777777)){
-                console.log("10% buy lottery number =>",randomGen(10));
+                // check if transaction meets the lottery threshold
+
+                var lottery_value = usd_spent;
+                var lottery_number = "";
+                var lottery_percentage = "";
+                
+                // $100 => 1%
+                if ((lottery_value >= 100) && (lottery_value <= 200)){
+                    lottery_number = randomGen(100);
+                    lottery_percentage = 1;
+                    console.log("1% buy lottery number =>",lottery_number);
+                } else 
+                // $200 => 2%
+                if ((lottery_value >= 200) && (lottery_value <= 300)){
+                    lottery_number = randomGen(90);
+                    lottery_percentage = 2;
+                    console.log("2% buy lottery number =>",lottery_number);
+                } else 
+                // $300 => 3%
+                if ((lottery_value >= 300) && (lottery_value <= 400)){
+                    lottery_number = randomGen(80);
+                    lottery_percentage = 3;
+                    console.log("3% buy lottery number =>",lottery_number);                } else 
+                // $400 => 4%
+                if ((lottery_value >= 400) && (lottery_value <= 500)){
+                    lottery_number = randomGen(70);
+                    lottery_percentage = 4;
+                    console.log("4% buy lottery number =>",lottery_number);                } else 
+                // $500 => 5%
+                if ((lottery_value >= 500) && (lottery_value <= 600)){
+                    lottery_number = randomGen(60);
+                    lottery_percentage = 5;
+                    console.log("5% buy lottery number =>",lottery_number);                }else 
+                // $600 => 6%
+                if ((lottery_value >= 600) && (lottery_value <= 700)){
+                    lottery_number = randomGen(50);
+                    lottery_percentage = 6;
+                    console.log("6% buy lottery number =>",lottery_number);                }else
+                // $700 => 7%
+                if ((lottery_value >= 700) && (lottery_value <= 800)){
+                    lottery_number = randomGen(40);
+                    lottery_percentage = 7;
+                    console.log("7% buy lottery number =>",lottery_number);                }else
+                // $800 => 8%
+                if ((lottery_value >= 800) && (lottery_value <= 900)){
+                    lottery_number = randomGen(30);
+                    lottery_percentage = 8;
+                    console.log("8% buy lottery number =>",lottery_number);                } else
+                // $900 => 9%
+                if ((lottery_value >= 900) && (lottery_value <= 1000)){
+                    lottery_number = randomGen(20);
+                    lottery_percentage = 9;
+                    console.log("9% buy lottery number =>",lottery_number);                }else
+                // $1000 => 10%
+                if ((lottery_value >= 1000)){
+                    lottery_number = randomGen(10);
+                    lottery_percentage = 10;
+                    console.log("10% buy lottery number =>",lottery_number);
+                } else if (lottery_value < 100){
+                    console.log("Not enough for lottery");
+                }
+
+                let bot_data = {
+                    eth: eth_spent,
+                    no_rush: no_tokens,
+                    usd: usd_spent,
+                    marketcap: marketcap,
+                    buyer_address: listener_from,
+                    lottery_percentage: lottery_percentage
+                }
+
+                // send to Bot
+                console.log(JSON.stringify(info, null, 4));
+                console.log("data =>",JSON.stringify(info.data, null, 4));
+                console.log("Bot Data =>",JSON.stringify(bot_data, null, 4));
+
             }
-            // send to Bot
-            console.log(JSON.stringify(info, null, 4));
-            console.log("data =>",JSON.stringify(info.data, null, 4));
-            console.log(token_data.priceUsd);
-        }
-        console.log(JSON.stringify(info, null, 4));
-        console.log("Bot Data =>",JSON.stringify(bot_data, null, 4));
-
+        })
     })
 }
 
