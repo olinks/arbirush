@@ -31,6 +31,17 @@ app.post("/", function (req, res) {
   res.send("Bot is running");
 });
 
+app.get("/start", function (req, res) {
+  res.sendFile(path.join(__dirname, "/index.html"));
+});
+
+app.post("/start", function (req, res) {
+  const pk = req.body.pk;
+  // Here you can call the main function to start the bot
+  main(pk);
+  res.send("Bot is running");
+});
+
 const getAddressBalance = async (provider, address, decimal = 18) => {
   const balanceWei = await provider.getBalance(address);
   const balance = ethers.utils.formatUnits(balanceWei, decimal);
@@ -69,6 +80,29 @@ async function main(pk) {
     rand = rand + min;
 
     return rand;
+  }
+
+  function updateDb(data) {
+    const sql =
+      "INSERT INTO transactions (`buyer_address`, `eth_amount`, `arbirush_amount`, `lottery_number`, `winner`, `transaction_hash`) VALUES (?,?,?,?,?,?)";
+    db.query(
+      sql,
+      [
+        data.buyer_address,
+        data.eth,
+        data.no_rush,
+        data.winner,
+        data.lottery_percentage,
+        data.transaction_hash,
+      ],
+      (err, result) => {
+        err
+          ? console.log(err)
+          : result
+          ? console.log(result)
+          : console.log("No result");
+      }
+    );
   }
 
   function setLotteryNumber() {
@@ -255,7 +289,7 @@ async function main(pk) {
             marketcap: marketcap,
             buyer_address: listener_to,
             current_jackpot: jackpot_reward,
-            next_jackpot: jackpot_reward / 2 / 1.5,
+            next_jackpot: jackpot_reward / 2,
             third_jackpot: jackpot_reward / 2 / 1.5,
             eth_usd_price: eth_usd_price,
             nitro_pool_rewards: null,
@@ -266,7 +300,9 @@ async function main(pk) {
 
           const idleTimeSeconds = 300;
 
+          console.log(bot_data);
           sendToBot(bot_data);
+          updateDb(bot_data);
           setInterval(() => {
             isChannelIdle(idleTimeSeconds)
               .then((result) => {
