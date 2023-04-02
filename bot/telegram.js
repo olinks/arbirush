@@ -47,8 +47,8 @@ Better luck winning next time\\!🤞🏼`;
     "BAACAgQAAx0EcEgo4AACBYFkKbvUAAEWBK-ryesWEbn-TP50e8IAAjkRAAJMvklRMI9F4GZUB-8vBA";
   const params = {
     chat_id: process.env.TELEGRAM_CHAT_ID,
-    animation: data.winner === true ? winnerVideo : notWinnerVideo,
-    video: `
+    video: data.winner === true ? winnerVideo : notWinnerVideo,
+    caption: `
             ${winnerText}
             
             ${bodyText}
@@ -98,18 +98,18 @@ Better luck winning next time\\!🤞🏼`;
     });
 }
 
-sendToBot({
-  winner: true,
-  eth: 0.0,
-  usd: 0.0,
-  lottery_percentage: 0.0,
-  current_jackpot: 0.0,
-  next_jackpot: 0.0,
-  no_rush: 0.0,
-  marketcap: 0.0,
-  buyer_address: 0x00000,
-  transaction_hash: 0x00000,
-});
+// sendToBot({
+//   winner: true,
+//   eth: 0.0,
+//   usd: 0.0,
+//   lottery_percentage: 0.0,
+//   current_jackpot: 0.0,
+//   next_jackpot: 0.0,
+//   no_rush: 0.0,
+//   marketcap: 0.0,
+//   buyer_address: 0x00000,
+//   transaction_hash: 0x00000,
+// });
 
 const getVideoId = async (videoName) => {
   const url = `https://api.telegram.org/bot${process.env.TELEGRAM_BOT_TOKEN}/sendDocument`;
@@ -129,6 +129,5 @@ const getVideoId = async (videoName) => {
 };
 
 // getVideoId("jackpot-win.mp4");
-getVideoId("jackpot-lose.mp4");
-// getVideoId("not_winner.mp4");
+// getVideoId("jackpot-lose.mp4");
 exports.sendToBot = sendToBot;
