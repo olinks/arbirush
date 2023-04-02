@@ -16,6 +16,52 @@ const app = express();
 app.use(cors());
 app.use(express.json());
 
+function sendToBot (data){
+    winnerText = data.winner?`
+    __We have a Winner__
+    Chances of winning: *${data.eth_value}*%
+
+    Congratulations! You won the lottery and have been rewarded with ${data.eth_value} ETH($${data.usd_value})
+    `:`
+    Not a winner
+    Try again or head to the Camelot's Nitro Pool to earn ETH rewards`
+    const params = {
+        chat_id: process.env.TELEGRAM_CHAT_ID,
+        text: `
+        ${winnerText}
+        *Current Jackpot:* ${data.from}
+        *Next Jackpot:* ${data.to}
+        *Nitro Pool rewards for next epoch:* ${data.value}
+
+        *Chances of Winning:* ${data.lottery_percentage}%
+
+        *Paid:* ${data.eth_value} ETH
+        *Bought:* ${data.no_rush} RUSH
+        *Price:* $${data.usd_value}
+        *Market Cap:* ${data.marketcap}
+
+        *[Buyer](https://arbiscan.io/address/${data.buyer_address}):*
+        *[Transaction](https://arbiscan.io/tx/${data.transaction_hash}):*
+        `,
+        parse_mode: "MarkdownV2",
+    }
+    axios.post("https://api.telegram.org/bot"+process.env.TELEGRAM_BOT_TOKEN+"/sendMessage", params)
+    .then((res) => {
+        console.log("Telegram message sent");
+    })
+    .catch((err) => {
+        console.log("Telegram message not sent");
+    });
+}
+
+const getAddressBalance = async (contract, address, decimal=18) =>{
+    const balance = (
+        (await contract.balanceOf(address)) /
+        10 ** decimal
+      ).toString();
+    return balance;
+}
+
 async function main (){
             
     let camelot_route = "0xeb034303A3C4380Aa78b14B86681bd0bE730De1C";
@@ -24,6 +70,7 @@ async function main (){
 
     // Arbi Rush contract address
     const arbiRushAddress = "0xb70c114B20d1EE068Dd4f5F36E301d0B604FEC18";
+    const jackpotAddress = "0xcae0318ad82d6173164fc384d29a1cb264d13c94";
 
     // configuring Listener WebSocket
     const provider = new ethers.providers.WebSocketProvider(
@@ -73,12 +120,13 @@ async function main (){
 
     // The Listener
     const contract = new ethers.Contract(arbiRushAddress, arbirushABI, provider);  
-    contract.on("Transfer", (from, to, value, event) => {
+    contract.on("Transfer", async(from, to, value, event) => {
 
         let token_data = "";
         let listener_from = from;
         let listener_to = to;
         let no_tokens = ethers.utils.formatUnits(value, 18);
+        const jackpot_balance = await getAddressBalance(contract, jackpotAddress);
         
         let info = {
             from :from,
@@ -166,6 +214,7 @@ async function main (){
                 } else if (lottery_value < 100){
                     console.log("Not enough for lottery");
                     lottery_percentage = 0;
+                    return
                 }
 
                 // Check if winner
@@ -177,9 +226,12 @@ async function main (){
                     usd: usd_spent,
                     marketcap: marketcap,
                     buyer_address: listener_to,
+                    transaction_hash: event.transactionHash,
                     lottery_percentage: lottery_percentage,
                     winner: winner
                 }
+
+                sendToBot(bot_data);
 
                 // send to Bot
                 console.log(JSON.stringify(info, null, 4));
