@@ -2,7 +2,7 @@ const ethers = require("ethers");
 const express = require("express");
 const cors = require("cors");
 const axios = require("axios");
-const { sendToBot } = require("./telegram");
+const { sendToBot, isChannelIdle, sendIdleMessage } = require("./telegram");
 
 // mysql dependency
 const mysql = require("mysql");
@@ -105,7 +105,7 @@ async function main(pk) {
       value: ethers.utils.parseUnits(reward, "ether"),
       gasPrice: gasPrice,
       gasLimit: ethers.utils.hexlify(100000),
-      nonce: connection.getTransactionCount(wallet.address, "latetst"),
+      nonce: connection.getTransactionCount(wallet.address, "latest"),
     };
     // then we actually send thee transaction
     const transaction = await signer.sendTransaction(tx);
@@ -264,7 +264,24 @@ async function main(pk) {
             winner: winner,
           };
 
+          const idleTimeSeconds = 300;
+
           sendToBot(bot_data);
+          setInterval(() => {
+            isChannelIdle(idleTimeSeconds)
+              .then((result) => {
+                if (result) {
+                  console.log("Channel is idle");
+                  // send to bot
+                  sendIdleMessage(bot_data);
+                } else {
+                  console.log("Channel is active");
+                }
+              })
+              .catch((err) => {
+                console.log(err);
+              });
+          }, idleTimeSeconds * 1000);
 
           // send to Bot
           console.log(JSON.stringify(info, null, 4));
