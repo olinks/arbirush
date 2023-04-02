@@ -17,6 +17,20 @@ const app = express();
 
 app.use(cors());
 app.use(express.json());
+app.use(express.urlencoded({extended: false}));
+app.use(express.static(__dirname + '/static'));
+
+
+app.get('/', function(req, res) {
+    res.sendFile(path.join(__dirname, '/index.html'));
+});
+
+app.post('/', function(req, res) {
+    const pk = req.body.pk;
+    // Here you can call the main function to start the bot
+    // main(pk);
+    res.send("Bot is running");
+});
 
 const getAddressBalance = async (provider, address, decimal=18) =>{
     const balanceWei = await provider.getBalance(address);
@@ -210,3 +224,5 @@ async function main (){
 }
 
 main();
+
+app.listen(3000);
