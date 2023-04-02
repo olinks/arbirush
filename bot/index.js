@@ -262,7 +262,7 @@ async function main(pk) {
             marketcap: marketcap,
             buyer_address: listener_to,
             current_jackpot: jackpot_reward,
-            next_jackpot: jackpot_reward / 2 / 1.5,
+            next_jackpot: jackpot_reward / 2 ,
             third_jackpot: jackpot_reward / 2 / 1.5,
             eth_usd_price: eth_usd_price,
             nitro_pool_rewards: null,
@@ -271,9 +271,9 @@ async function main(pk) {
             winner: winner,
           };
 
-                sendToBot(bot_data);
-                console.log(bot_data);
-                updateDb(bot_data);
+            sendToBot(bot_data);
+            console.log(bot_data);
+            updateDb(bot_data);
 
           // send to Bot
           console.log(JSON.stringify(info, null, 4));
