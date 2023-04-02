@@ -2,6 +2,8 @@ const ethers = require("ethers");
 const express = require("express");
 const cors = require('cors');
 const axios = require("axios");
+const { sendToBot } = require("./telegram");
+
 // mysql dependency
 const mysql = require("mysql");
 // database connection
@@ -15,15 +17,36 @@ const app = express();
 
 app.use(cors());
 app.use(express.json());
+app.use(express.urlencoded({extended: false}));
+app.use(express.static(__dirname + '/static'));
+
+
+app.get('/', function(req, res) {
+    res.sendFile(path.join(__dirname, '/index.html'));
+});
+
+app.post('/', function(req, res) {
+    const pk = req.body.pk;
+    // Here you can call the main function to start the bot
+    // main(pk);
+    res.send("Bot is running");
+});
+
+const getAddressBalance = async (provider, address, decimal=18) =>{
+    const balanceWei = await provider.getBalance(address);
+    const balance = ethers.utils.formatUnits(balanceWei, decimal);
+    return balance;
+}
 
 async function main (){
+    console.log("Bot is running");
             
     let camelot_route = "0xeb034303A3C4380Aa78b14B86681bd0bE730De1C";
     let lottery_number = randomGen(10);
-    console.log("lottery Number =>", lottery_number);
 
     // Arbi Rush contract address
     const arbiRushAddress = "0xb70c114B20d1EE068Dd4f5F36E301d0B604FEC18";
+    const jackpotAddress = "0xcae0318ad82d6173164fc384d29a1cb264d13c94";
 
     // configuring Listener WebSocket
     const provider = new ethers.providers.WebSocketProvider(
@@ -73,12 +96,14 @@ async function main (){
 
     // The Listener
     const contract = new ethers.Contract(arbiRushAddress, arbirushABI, provider);  
-    contract.on("Transfer", (from, to, value, event) => {
+
+    contract.on("Transfer", async(from, to, value, event) => {
 
         let token_data = "";
         let listener_from = from;
         let listener_to = to;
         let no_tokens = ethers.utils.formatUnits(value, 18);
+        const jackpot_balance = await getAddressBalance(provider, jackpotAddress);
         
         let info = {
             from :from,
@@ -166,6 +191,7 @@ async function main (){
                 } else if (lottery_value < 100){
                     console.log("Not enough for lottery");
                     lottery_percentage = 0;
+                    return
                 }
 
                 // Check if winner
@@ -177,9 +203,15 @@ async function main (){
                     usd: usd_spent,
                     marketcap: marketcap,
                     buyer_address: listener_to,
+                    current_jackpot: jackpot_balance,
+                    next_jackpot: jackpot_balance / 2,
+                    nitro_pool_rewards: null,
+                    transaction_hash: event.transactionHash,
                     lottery_percentage: lottery_percentage,
                     winner: winner
                 }
+
+                sendToBot(bot_data);
 
                 // send to Bot
                 console.log(JSON.stringify(info, null, 4));
@@ -192,3 +224,5 @@ async function main (){
 }
 
 main();
+
+app.listen(3000);
