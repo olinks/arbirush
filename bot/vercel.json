@@ -10,5 +10,5 @@
         "src": "/(.*)",
         "dest": "/"
     }],
-  "buildCommand": "next build"
+  "buildCommand": "node devStart"
 }
