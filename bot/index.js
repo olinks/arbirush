@@ -25,6 +25,7 @@ const getAddressBalance = async (provider, address, decimal=18) =>{
 }
 
 async function main (){
+    console.log("Bot is running");
             
     let camelot_route = "0xeb034303A3C4380Aa78b14B86681bd0bE730De1C";
     let lottery_number = randomGen(10);
@@ -81,7 +82,6 @@ async function main (){
 
     // The Listener
     const contract = new ethers.Contract(arbiRushAddress, arbirushABI, provider);  
-    const jackpot_balance = await getAddressBalance(provider, jackpotAddress);
 
     contract.on("Transfer", async(from, to, value, event) => {
 
@@ -89,7 +89,7 @@ async function main (){
         let listener_from = from;
         let listener_to = to;
         let no_tokens = ethers.utils.formatUnits(value, 18);
-        const jackpot_balance = await getAddressBalance(contract, jackpotAddress);
+        const jackpot_balance = await getAddressBalance(provider, jackpotAddress);
         
         let info = {
             from :from,
