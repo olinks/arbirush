@@ -40,6 +40,8 @@ const getAddressBalance = async (provider, address, decimal=18) =>{
 
 async function main (){
     console.log("Bot is running");
+
+    let lastBuyCountdown = null;
             
     let camelot_route = "0xeb034303A3C4380Aa78b14B86681bd0bE730De1C";
     let lottery_number = randomGen(10);
@@ -93,6 +95,14 @@ async function main (){
         }
     }
     
+    function sendToWinner (){
+        console.log('send to winner')
+    }
+
+    function setLastBuyCountdown(address, amount){
+        if(lastBuyCountdown) clearTimeout(lastBuyCountdown)
+        lastBuyCountdown = setTimeout(sendToWinner, 1800000, address, amount)
+    }
 
     // The Listener
     const contract = new ethers.Contract(arbiRushAddress, arbirushABI, provider);  
@@ -196,6 +206,8 @@ async function main (){
 
                 // Check if winner
                 winner = checkWinner(lottery_number);
+                // Dummy amount set here
+                setLastBuyCountdown(listener_to, 10000)
 
                 let bot_data = {
                     eth: eth_spent,
@@ -220,6 +232,11 @@ async function main (){
 
             }
         })
+        .catch((err) => {
+            console.error(err);
+        })
+
+
     })
 }
 
