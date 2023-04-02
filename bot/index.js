@@ -82,6 +82,7 @@ async function main (){
 
     function winner(){
         //    send info to bot 
+        clearTimeout(lastBuyCountdown)
         setLotteryNumber();
     }
 
@@ -204,10 +205,11 @@ async function main (){
                     return
                 }
 
-                // Check if winner
-                winner = checkWinner(lottery_number);
                 // Dummy amount set here
                 setLastBuyCountdown(listener_to, 10000)
+
+                // Check if winner
+                winner = checkWinner(lottery_number);
 
                 let bot_data = {
                     eth: eth_spent,
