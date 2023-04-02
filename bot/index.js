@@ -82,7 +82,7 @@ async function main (){
 
     function winner(){
         //    send info to bot 
-        clearTimeout(lastBuyCountdown)
+        if (lastBuyCountdown) clearTimeout(lastBuyCountdown)
         setLotteryNumber();
     }
 
