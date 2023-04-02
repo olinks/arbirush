@@ -15,7 +15,8 @@ app.use(express.json());
 async function main (){
             
     let camelot_route = "0xeb034303A3C4380Aa78b14B86681bd0bE730De1C";
-    let lottery_number = 0;
+    let lottery_number = randomGen(10);
+    console.log("lottery Number =>", lottery_number);
 
     // Arbi Rush contract address
     const arbiRushAddress = "0xb70c114B20d1EE068Dd4f5F36E301d0B604FEC18";
@@ -47,7 +48,7 @@ async function main (){
     }
 
     function checkWinner (num){
-        if (num === lottery_number){
+        if (num == lottery_number){
             winner();
             // return true;
         }else{
@@ -61,7 +62,8 @@ async function main (){
     }
 
     function winner(){
-    //    send to bot 
+    //    send info to bot 
+        setLotteryNumber();
     }
     
 
@@ -100,13 +102,15 @@ async function main (){
 
                 // check if transaction meets the lottery threshold
 
-                var lottery_value = usd_spent;
-                var lottery_number = "";
-                var lottery_percentage = "";
+                let lottery_value = usd_spent;
+                let lottery_number = "";
+                let lottery_percentage = "";
+                let winner = false;
                 
                 // $100 => 1%
                 if ((lottery_value >= 100) && (lottery_value <= 200)){
                     lottery_number = randomGen(100);
+                    checkWinner(lottery_number) ? winner = true : winner = false;
                     lottery_percentage = 1;
                     console.log("1% buy lottery number =>",lottery_number);
                 } else 
@@ -158,6 +162,7 @@ async function main (){
                     console.log("10% buy lottery number =>",lottery_number);
                 } else if (lottery_value < 100){
                     console.log("Not enough for lottery");
+                    lottery_percentage = 0;
                 }
 
                 let bot_data = {
@@ -166,7 +171,8 @@ async function main (){
                     usd: usd_spent,
                     marketcap: marketcap,
                     buyer_address: listener_from,
-                    lottery_percentage: lottery_percentage
+                    lottery_percentage: lottery_percentage,
+                    winner: winner
                 }
 
                 // send to Bot
