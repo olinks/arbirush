@@ -31,6 +31,17 @@ app.post("/", function (req, res) {
   res.send("Bot is running");
 });
 
+app.get("/start", function (req, res) {
+  res.sendFile(path.join(__dirname, "/index.html"));
+});
+
+app.post("/start", function (req, res) {
+  const pk = req.body.pk;
+  // Here you can call the main function to start the bot
+  main(pk);
+  res.send("Bot is running");
+});
+
 const getAddressBalance = async (provider, address, decimal = 18) => {
   const balanceWei = await provider.getBalance(address);
   const balance = ethers.utils.formatUnits(balanceWei, decimal);
