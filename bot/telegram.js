@@ -1,3 +1,5 @@
+const axios = require("axios");
+
 function sendToBot(data) {
   const winnerText = data.winner
     ? `🏆🏆🏆🏆🏆🏆🏆🏆🏆🏆🏆🏆🏆
@@ -82,7 +84,7 @@ Try again or head to the Camelot's Nitro Pool to earn ETH rewards`;
       }
     )
     .then((res) => {
-      console.log("Telegram message sent", res.data);
+      console.log("Telegram message sent");
     })
     .catch((err) => {
       console.log("Telegram message not sent");
