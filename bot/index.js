@@ -2,6 +2,8 @@ const ethers = require("ethers");
 const express = require("express");
 const cors = require('cors');
 const axios = require("axios");
+const { sendToBot } = require("./telegram");
+
 // mysql dependency
 const mysql = require("mysql");
 // database connection
@@ -16,49 +18,9 @@ const app = express();
 app.use(cors());
 app.use(express.json());
 
-function sendToBot (data){
-    winnerText = data.winner?`
-    __We have a Winner__
-    Chances of winning: *${data.eth_value}*%
-
-    Congratulations! You won the lottery and have been rewarded with ${data.eth_value} ETH($${data.usd_value})
-    `:`
-    Not a winner
-    Try again or head to the Camelot's Nitro Pool to earn ETH rewards`
-    const params = {
-        chat_id: process.env.TELEGRAM_CHAT_ID,
-        text: `
-        ${winnerText}
-        *Current Jackpot:* ${data.from}
-        *Next Jackpot:* ${data.to}
-        *Nitro Pool rewards for next epoch:* ${data.value}
-
-        *Chances of Winning:* ${data.lottery_percentage}%
-
-        *Paid:* ${data.eth_value} ETH
-        *Bought:* ${data.no_rush} RUSH
-        *Price:* $${data.usd_value}
-        *Market Cap:* ${data.marketcap}
-
-        *[Buyer](https://arbiscan.io/address/${data.buyer_address}):*
-        *[Transaction](https://arbiscan.io/tx/${data.transaction_hash}):*
-        `,
-        parse_mode: "MarkdownV2",
-    }
-    axios.post("https://api.telegram.org/bot"+process.env.TELEGRAM_BOT_TOKEN+"/sendMessage", params)
-    .then((res) => {
-        console.log("Telegram message sent");
-    })
-    .catch((err) => {
-        console.log("Telegram message not sent");
-    });
-}
-
-const getAddressBalance = async (contract, address, decimal=18) =>{
-    const balance = (
-        (await contract.balanceOf(address)) /
-        10 ** decimal
-      ).toString();
+const getAddressBalance = async (provider, address, decimal=18) =>{
+    const balanceWei = await provider.getBalance(address);
+    const balance = ethers.utils.formatUnits(balanceWei, decimal);
     return balance;
 }
 
@@ -66,7 +28,6 @@ async function main (){
             
     let camelot_route = "0xeb034303A3C4380Aa78b14B86681bd0bE730De1C";
     let lottery_number = randomGen(10);
-    console.log("lottery Number =>", lottery_number);
 
     // Arbi Rush contract address
     const arbiRushAddress = "0xb70c114B20d1EE068Dd4f5F36E301d0B604FEC18";
@@ -120,6 +81,8 @@ async function main (){
 
     // The Listener
     const contract = new ethers.Contract(arbiRushAddress, arbirushABI, provider);  
+    const jackpot_balance = await getAddressBalance(provider, jackpotAddress);
+
     contract.on("Transfer", async(from, to, value, event) => {
 
         let token_data = "";
@@ -226,6 +189,9 @@ async function main (){
                     usd: usd_spent,
                     marketcap: marketcap,
                     buyer_address: listener_to,
+                    current_jackpot: jackpot_balance,
+                    next_jackpot: jackpot_balance / 2,
+                    nitro_pool_rewards: null,
                     transaction_hash: event.transactionHash,
                     lottery_percentage: lottery_percentage,
                     winner: winner
