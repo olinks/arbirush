@@ -1,4 +1,8 @@
 const axios = require("axios");
+const path = require("path");
+const fs = require("fs");
+const FormData = require("form-data");
+require("dotenv").config();
 
 function sendToBot(data) {
   const winnerText = data.winner
@@ -10,21 +14,22 @@ function sendToBot(data) {
 
 🐉🏆Congratulations\\! You won the lottery and have been rewarded with ${data.eth} ETH\\($${data.usd}\\)
         `
-    : `😣😣😣😣😣😣😣😣😣😣😣😣😣
+    : `🤑🤑🤑🤑🤑🤑🤑🤑🤑🤑🤑🤑🤑
 
-Not a winner
-Try again or head to the Camelot's Nitro Pool to earn ETH rewards`;
+🥲Not a winner🥲
+Better luck winning next time\\!🤞🏼`;
 
   const bodyText = `
 *Current Jackpot:* ${data.current_jackpot}
 *Next Jackpot:* ${data.next_jackpot}
-*Nitro Pool rewards for next epoch:* ${data.nitro_pool_rewards}
+*Third Jackpot:* ${data.next_jackpot}
 
 *Chances of Winning:* ${data.lottery_percentage}%
 
 *Paid:* ${data.eth} ETH
 *Bought:* ${data.no_rush} RUSH
-*Price:* $${data.usd}
+
+*$RUSH Price:* $${data.usd}
 *Market Cap:* ${data.marketcap}
         `;
   const footerText = `
@@ -35,9 +40,15 @@ Try again or head to the Camelot's Nitro Pool to earn ETH rewards`;
 
 *[💰Buy $RUSH Here](https://app.camelot.exchange/?token2=0xb70c114B20d1EE068Dd4f5F36E301d0B604FEC18)*
         `;
+
+  const notWinnerVideo =
+    "BAACAgQAAx0EcEgo4AACBYJkKbwsD3lv-PP2JA9Yix-bX7IrSAACPhEAAky-SVGvC0o2T5huoC8E";
+  const winnerVideo =
+    "BAACAgQAAx0EcEgo4AACBYFkKbvUAAEWBK-ryesWEbn-TP50e8IAAjkRAAJMvklRMI9F4GZUB-8vBA";
   const params = {
     chat_id: process.env.TELEGRAM_CHAT_ID,
-    text: `
+    animation: data.winner === true ? winnerVideo : notWinnerVideo,
+    video: `
             ${winnerText}
             
             ${bodyText}
@@ -75,13 +86,8 @@ Try again or head to the Camelot's Nitro Pool to earn ETH rewards`;
     .post(
       "https://api.telegram.org/bot" +
         process.env.TELEGRAM_BOT_TOKEN +
-        "/sendMessage",
-      params,
-      {
-        headers: {
-          "Content-Type": "application/json",
-        },
-      }
+        "/sendVideo",
+      params
     )
     .then((res) => {
       console.log("Telegram message sent");
@@ -92,4 +98,37 @@ Try again or head to the Camelot's Nitro Pool to earn ETH rewards`;
     });
 }
 
+sendToBot({
+  winner: true,
+  eth: 0.0,
+  usd: 0.0,
+  lottery_percentage: 0.0,
+  current_jackpot: 0.0,
+  next_jackpot: 0.0,
+  no_rush: 0.0,
+  marketcap: 0.0,
+  buyer_address: 0x00000,
+  transaction_hash: 0x00000,
+});
+
+const getVideoId = async (videoName) => {
+  const url = `https://api.telegram.org/bot${process.env.TELEGRAM_BOT_TOKEN}/sendDocument`;
+  const chatId = process.env.TELEGRAM_CHAT_ID;
+
+  const filePath = path.join(__dirname, "media", videoName);
+  console.log(filePath, chatId);
+
+  const formData = new FormData();
+  formData.append("chat_id", chatId);
+  formData.append("document", fs.createReadStream(filePath));
+
+  axios
+    .post(url, formData)
+    .then((data) => console.log(data.data.result.video.file_id))
+    .catch((error) => console.error(error));
+};
+
+// getVideoId("jackpot-win.mp4");
+getVideoId("jackpot-lose.mp4");
+// getVideoId("not_winner.mp4");
 exports.sendToBot = sendToBot;
