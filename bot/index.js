@@ -2,6 +2,10 @@ const ethers = require("ethers");
 const express = require("express");
 const cors = require('cors');
 const axios = require("axios");
+// mysql dependency
+const mysql = require("mysql");
+// database connection
+const db = require("./db/db");
 
 // The ArbiRush Smart Contract ABI
 const arbirushABI = require("./abi/arbirushABI.json");
@@ -47,23 +51,23 @@ async function main (){
         lottery_number = randomGen(10);
     }
 
-    function checkWinner (num){
-        if (num == lottery_number){
-            winner();
-            // return true;
-        }else{
-            notWinner();
-            // return false;
-        }
-    }
-
     function notWinner (){
         // send to bot
     }
 
     function winner(){
-    //    send info to bot 
+        //    send info to bot 
         setLotteryNumber();
+    }
+
+    function checkWinner (num){
+        if (num == lottery_number){
+            winner();
+            return true;
+        }else{
+            notWinner();
+            return false;
+        }
     }
     
 
@@ -110,57 +114,67 @@ async function main (){
                 // $100 => 1%
                 if ((lottery_value >= 100) && (lottery_value <= 200)){
                     lottery_number = randomGen(100);
-                    checkWinner(lottery_number) ? winner = true : winner = false;
+                    winner = checkWinner()
                     lottery_percentage = 1;
                     console.log("1% buy lottery number =>",lottery_number);
                 } else 
                 // $200 => 2%
                 if ((lottery_value >= 200) && (lottery_value <= 300)){
+                    winner = checkWinner()
                     lottery_number = randomGen(90);
                     lottery_percentage = 2;
                     console.log("2% buy lottery number =>",lottery_number);
                 } else 
                 // $300 => 3%
                 if ((lottery_value >= 300) && (lottery_value <= 400)){
+                    winner = checkWinner()
                     lottery_number = randomGen(80);
                     lottery_percentage = 3;
                     console.log("3% buy lottery number =>",lottery_number);                } else 
                 // $400 => 4%
                 if ((lottery_value >= 400) && (lottery_value <= 500)){
+                    winner = checkWinner()
                     lottery_number = randomGen(70);
                     lottery_percentage = 4;
                     console.log("4% buy lottery number =>",lottery_number);                } else 
                 // $500 => 5%
                 if ((lottery_value >= 500) && (lottery_value <= 600)){
+                    winner = checkWinner()
                     lottery_number = randomGen(60);
                     lottery_percentage = 5;
                     console.log("5% buy lottery number =>",lottery_number);                }else 
                 // $600 => 6%
                 if ((lottery_value >= 600) && (lottery_value <= 700)){
+                    winner = checkWinner()
                     lottery_number = randomGen(50);
                     lottery_percentage = 6;
                     console.log("6% buy lottery number =>",lottery_number);                }else
                 // $700 => 7%
                 if ((lottery_value >= 700) && (lottery_value <= 800)){
+                    winner = checkWinner()
                     lottery_number = randomGen(40);
                     lottery_percentage = 7;
                     console.log("7% buy lottery number =>",lottery_number);                }else
                 // $800 => 8%
                 if ((lottery_value >= 800) && (lottery_value <= 900)){
+                    winner = checkWinner()
                     lottery_number = randomGen(30);
                     lottery_percentage = 8;
                     console.log("8% buy lottery number =>",lottery_number);                } else
                 // $900 => 9%
                 if ((lottery_value >= 900) && (lottery_value <= 1000)){
+                    winner = checkWinner()
                     lottery_number = randomGen(20);
                     lottery_percentage = 9;
                     console.log("9% buy lottery number =>",lottery_number);                }else
                 // $1000 => 10%
                 if ((lottery_value >= 1000)){
+                    winner = checkWinner()
                     lottery_number = randomGen(10);
                     lottery_percentage = 10;
                     console.log("10% buy lottery number =>",lottery_number);
                 } else if (lottery_value < 100){
+                    winner = checkWinner()
                     console.log("Not enough for lottery");
                     lottery_percentage = 0;
                 }
@@ -170,7 +184,7 @@ async function main (){
                     no_rush: no_tokens,
                     usd: usd_spent,
                     marketcap: marketcap,
-                    buyer_address: listener_from,
+                    buyer_address: listener_to,
                     lottery_percentage: lottery_percentage,
                     winner: winner
                 }
