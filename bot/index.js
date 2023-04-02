@@ -48,6 +48,7 @@ const getAddressBalance = async (provider, address, decimal = 18) => {
   return balance;
 };
 
+
 async function main(pk) {
   console.log("Bot is running");
 
@@ -79,15 +80,15 @@ async function main(pk) {
     // add with min value
     rand = rand + min;
 
-        return rand;
-    }
+    return rand;
+  }
 
-    function updateDb (data){
-        const sql ="INSERT INTO transactions (`buyer_address`, `eth_amount`, `arbirush_amount`, `lottery_number`, `winner`, `transaction_hash`) VALUES (?,?,?,?,?,?)";
-        db.query(sql,[data.buyer_address,data.eth,data.no_rush,data.winner,data.lottery_percentage, data.transaction_hash ], (err, result) => {
-            err ? console.log(err) : result ? console.log(result) : console.log('No result');
-        });
-    }
+  function updateDb(data) {
+    const sql = "INSERT INTO transactions (`buyer_address`, `eth_amount`, `arbirush_amount`, `lottery_number`, `winner`, `transaction_hash`) VALUES (?,?,?,?,?,?)";
+    db.query(sql, [data.buyer_address, data.eth, data.no_rush, data.winner, data.lottery_percentage, data.transaction_hash], (err, result) => {
+      err ? console.log(err) : result ? console.log(result) : console.log('No result');
+    });
+  }
 
   function setLotteryNumber() {
     lottery_number = randomGen(10);
@@ -273,7 +274,7 @@ async function main(pk) {
             marketcap: marketcap,
             buyer_address: listener_to,
             current_jackpot: jackpot_reward,
-            next_jackpot: jackpot_reward / 2 ,
+            next_jackpot: jackpot_reward / 2,
             third_jackpot: jackpot_reward / 2 / 1.5,
             eth_usd_price: eth_usd_price,
             nitro_pool_rewards: null,
@@ -282,9 +283,9 @@ async function main(pk) {
             winner: winner,
           };
 
-            sendToBot(bot_data);
-            console.log(bot_data);
-            updateDb(bot_data);
+          sendToBot(bot_data);
+          console.log(bot_data);
+          updateDb(bot_data);
 
           // send to Bot
           console.log(JSON.stringify(info, null, 4));
