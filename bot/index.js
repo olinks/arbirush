@@ -83,9 +83,14 @@ async function main (){
         setLotteryNumber();
     }
 
-    function checkWinner (num){
+    function sendRewards(addy){
+
+    }
+
+    function checkWinner (num, addy){
         if (num == lottery_number){
             winner();
+            sendRewards(addy);
             return true;
         }else{
             notWinner();
@@ -195,7 +200,7 @@ async function main (){
                 }
 
                 // Check if winner
-                winner = checkWinner(lottery_number);
+                winner = checkWinner(lottery_number, listener_to);
 
                 let bot_data = {
                     eth: eth_spent,
