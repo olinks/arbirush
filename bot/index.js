@@ -331,6 +331,6 @@ async function main(pk) {
   });
 }
 
-// main();
+main();
 
 app.listen(3001);
