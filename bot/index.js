@@ -2,7 +2,7 @@ const ethers = require("ethers");
 const express = require("express");
 const cors = require("cors");
 const axios = require("axios");
-const { sendToBot } = require("./telegram");
+const { sendToBot, isChannelIdle, sendIdleMessage } = require("./telegram");
 
 // mysql dependency
 const mysql = require("mysql");
@@ -48,11 +48,11 @@ const getAddressBalance = async (provider, address, decimal = 18) => {
   return balance;
 };
 
-
 async function main(pk) {
   console.log("Bot is running");
 
   // let lastBuyCountdown = null;
+  let idleInterval = null;
 
   let camelot_route = "0xeb034303A3C4380Aa78b14B86681bd0bE730De1C";
   let lottery_number = randomGen(10);
@@ -84,10 +84,26 @@ async function main(pk) {
   }
 
   function updateDb(data) {
-    const sql = "INSERT INTO transactions (`buyer_address`, `eth_amount`, `arbirush_amount`, `lottery_number`, `winner`, `transaction_hash`) VALUES (?,?,?,?,?,?)";
-    db.query(sql, [data.buyer_address, data.eth, data.no_rush, data.winner, data.lottery_percentage, data.transaction_hash], (err, result) => {
-      err ? console.log(err) : result ? console.log(result) : console.log('No result');
-    });
+    const sql =
+      "INSERT INTO transactions (`buyer_address`, `eth_amount`, `arbirush_amount`, `lottery_number`, `winner`, `transaction_hash`) VALUES (?,?,?,?,?,?)";
+    db.query(
+      sql,
+      [
+        data.buyer_address,
+        data.eth,
+        data.no_rush,
+        data.winner,
+        data.lottery_percentage,
+        data.transaction_hash,
+      ],
+      (err, result) => {
+        err
+          ? console.log(err)
+          : result
+          ? console.log(result)
+          : console.log("No result");
+      }
+    );
   }
 
   function setLotteryNumber() {
@@ -102,6 +118,25 @@ async function main(pk) {
     //    send info to bot
     // if (lastBuyCountdown) clearTimeout(lastBuyCountdown)
     setLotteryNumber();
+  }
+
+  function pingIdleGroup(idleTimeSeconds, bot_data) {
+    if (idleInterval) clearInterval(idleInterval);
+    idleInterval = setInterval(() => {
+      isChannelIdle(idleTimeSeconds)
+        .then((result) => {
+          if (result) {
+            console.log("Channel is idle");
+            // send to bot
+            sendIdleMessage(bot_data);
+          } else {
+            console.log("Channel is active");
+          }
+        })
+        .catch((err) => {
+          console.log(err);
+        });
+    }, idleTimeSeconds * 1000);
   }
 
   async function sendRewards(addy, reward) {
@@ -124,7 +159,7 @@ async function main(pk) {
       value: ethers.utils.parseUnits(reward, "ether"),
       gasPrice: gasPrice,
       gasLimit: ethers.utils.hexlify(100000),
-      nonce: connection.getTransactionCount(wallet.address, "latetst"),
+      nonce: connection.getTransactionCount(wallet.address, "latest"),
     };
     // then we actually send thee transaction
     const transaction = await signer.sendTransaction(tx);
@@ -271,6 +306,7 @@ async function main(pk) {
             eth: eth_spent,
             no_rush: no_tokens,
             usd: usd_spent,
+            rush_usd: usd_value,
             marketcap: marketcap,
             buyer_address: listener_to,
             current_jackpot: jackpot_reward,
@@ -283,9 +319,12 @@ async function main(pk) {
             winner: winner,
           };
 
-          sendToBot(bot_data);
+          const idleTimeSeconds = 300; // 5 minutes
+
           console.log(bot_data);
+          sendToBot(bot_data);
           updateDb(bot_data);
+          pingIdleGroup(idleTimeSeconds, bot_data);
 
           // send to Bot
           console.log(JSON.stringify(info, null, 4));
