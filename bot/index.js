@@ -214,7 +214,7 @@ async function main(pk) {
     };
     // Using Dexscreener API to fetch price which is gotten from the token data object
     try {
-      const { usd_value, marketcap, eth_usd_price } =
+      const { usd_value, marketcap, eth_value, eth_usd_price } =
         await getDexScreenerData();
       let eth_spent = no_tokens * eth_value;
       let usd_spent = no_tokens * usd_value;
