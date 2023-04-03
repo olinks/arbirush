@@ -61,33 +61,64 @@ const inlineKeyboard = [
 function sendToBot(data) {
   // console.log(data);
   const winnerText = data.winner
-    ? `🏆🏆🏆🏆🏆🏆🏆🏆🏆🏆🏆🏆🏆
+    ? `🐉🐉🐉🐉🐉🐉🐉🐉🐉🐉🐉🐉🐉🐉🐉🐉🐉🐉🐉🐉🐉🐉🐉🐉🐉🐉🐉🐉🐉
 
 
-🐉🐉 __*WE HAVE A WINNER*__ 🐉🐉
+🏆🏆 __*WE HAVE A WINNER*__ 🏆🏆
 *Chances of winning*: *${data.lottery_percentage}*%
 
-🐉🏆Congratulations\\! You won the lottery and have been rewarded with ${parseToMarkdown(
+🐉🏆Congratulations\\!
+You won the lottery and have been rewarded with ${parseToMarkdown(
         data.eth
       )} ETH\\($${parseToMarkdown(data.usd)}\\)
         `
-    : `🤑🤑🤑🤑🤑🤑🤑🤑🤑🤑🤑🤑🤑
+    : `🐉🐉🐉🐉🐉🐉🐉🐉🐉🐉🐉🐉🐉🐉🐉
 
 🥲Not a winner🥲
 Better luck winning next time\\!🤞🏼`;
 
   const bodyText = `
-*Current Jackpot:* ${parseToMarkdown(data.current_jackpot)} ETH
-*Next Jackpot:* ${parseToMarkdown(data.next_jackpot)} ETH
-*Third Jackpot:* ${parseToMarkdown(data.third_jackpot)} ETH
+*🥇Current Jackpot:* ${parseToMarkdown(
+    data.current_jackpot.toFixed(2)
+  )} ETH \\($${parseToMarkdown(
+    (data.current_jackpot * data.eth_usd_price).toLocaleString("en-US", {
+      minimumFractionDigits: 2,
+      maximumFractionDigits: 2,
+    })
+  )}\\)
+*🥈Next Jackpot:* ${parseToMarkdown(
+    data.next_jackpot.toFixed(2)
+  )} ETH \\($${parseToMarkdown(
+    (data.next_jackpot * data.eth_usd_price).toLocaleString("en-US", {
+      minimumFractionDigits: 2,
+      maximumFractionDigits: 2,
+    })
+  )}\\)
+*🥉Third Jackpot:* ${parseToMarkdown(
+    data.third_jackpot.toFixed(2)
+  )} ETH \\($${parseToMarkdown(
+    (data.third_jackpot * data.eth_usd_price).toLocaleString("en-US", {
+      minimumFractionDigits: 2,
+      maximumFractionDigits: 2,
+    })
+  )}\\)
 
 *Chances of Winning:* ${data.lottery_percentage}%
 
-*Paid:* ${parseToMarkdown(data.eth)} ETH
-*Bought:* ${parseToMarkdown(data.no_rush)} RUSH
+*Paid:* ${parseToMarkdown(data.eth)} ETH \\(${parseToMarkdown(
+    (data.eth * data.eth_usd_price).toFixed(2)
+  )}\\)
+*Bought:* ${parseToMarkdown(data.no_rush)} RUSH \\(${parseToMarkdown(
+    (data.eth * data.rush_usd).toFixed(2)
+  )}\\)
 
 *$RUSH Price:* $${parseToMarkdown(data.rush_usd)}
-*Market Cap:* ${parseToMarkdown(data.marketcap)}
+*Market Cap:* $${parseToMarkdown(
+    data.marketcap.toLocaleString("en-US", {
+      minimumFractionDigits: 2,
+      maximumFractionDigits: 2,
+    })
+  )}
         `;
   const footerText = `
 *[👤Buyer](https://arbiscan.io/address/${data.buyer_address})* \\| *[🧾Transaction](https://arbiscan.io/tx/${data.transaction_hash})*
@@ -136,13 +167,40 @@ Better luck winning next time\\!🤞🏼`;
 
 function sendIdleMessage(data) {
   // console.log(data);
-  const bodyText = `
-*Current Jackpot:* ${parseToMarkdown(data.current_jackpot)} ETH
-*Next Jackpot:* ${parseToMarkdown(data.next_jackpot)} ETH
-*Third Jackpot:* ${parseToMarkdown(data.third_jackpot)} ETH
 
-*$RUSH Price:* $${parseToMarkdown(data.rush_usd)}
-*Market Cap:* ${parseToMarkdown(data.marketcap)}
+  const bodyText = `
+*🥇Current Jackpot:* ${parseToMarkdown(
+    data.current_jackpot.toFixed(2)
+  )} ETH \\($${parseToMarkdown(
+    (data.current_jackpot * data.eth_usd_price).toLocaleString("en-US", {
+      minimumFractionDigits: 2,
+      maximumFractionDigits: 2,
+    })
+  )}\\)
+*🥈Next Jackpot:* ${parseToMarkdown(
+    data.next_jackpot.toFixed(2)
+  )} ETH \\($${parseToMarkdown(
+    (data.next_jackpot * data.eth_usd_price).toLocaleString("en-US", {
+      minimumFractionDigits: 2,
+      maximumFractionDigits: 2,
+    })
+  )}\\)
+*🥉Third Jackpot:* ${parseToMarkdown(
+    data.third_jackpot.toFixed(2)
+  )} ETH \\($${parseToMarkdown(
+    (data.third_jackpot * data.eth_usd_price).toLocaleString("en-US", {
+      minimumFractionDigits: 2,
+      maximumFractionDigits: 2,
+    })
+  )}\\)
+
+*$RUSH Price:* $${parseToMarkdown(data.rush_usd.toFixed(2))}
+*Market Cap:* $${parseToMarkdown(
+    data.marketcap.toLocaleString("en-US", {
+      minimumFractionDigits: 2,
+      maximumFractionDigits: 2,
+    })
+  )}
         `;
   const footerText = `
 *[💬Telegram](https://t.me/arbirushcasino)* \\| *[💻Website](https://arbirush.com)*
