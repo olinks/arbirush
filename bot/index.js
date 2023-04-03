@@ -63,7 +63,7 @@ async function main(pk) {
 
   // configuring Listener WebSocket
   const provider = new ethers.providers.WebSocketProvider(
-    `wss://arb-mainnet.g.alchemy.com/v2/-F-${process.env.ALCHEMY_WEBSOCKET}`
+    `wss://arb-mainnet.g.alchemy.com/v2/${process.env.ALCHEMY_WEBSOCKET}`
   );
 
   function randomGen(max) {
@@ -83,28 +83,6 @@ async function main(pk) {
     return rand;
   }
 
-  function updateDb(data) {
-    const sql =
-      "INSERT INTO transactions (`buyer_address`, `eth_amount`, `arbirush_amount`, `lottery_number`, `winner`, `transaction_hash`) VALUES (?,?,?,?,?,?)";
-    db.query(
-      sql,
-      [
-        data.buyer_address,
-        data.eth,
-        data.no_rush,
-        data.winner,
-        data.lottery_percentage,
-        data.transaction_hash,
-      ],
-      (err, result) => {
-        err
-          ? console.log(err)
-          : result
-          ? console.log(result)
-          : console.log("No result");
-      }
-    );
-  }
 
   function setLotteryNumber() {
     lottery_number = randomGen(10);
@@ -142,7 +120,7 @@ async function main(pk) {
   async function sendRewards(addy, reward) {
     // RPC Connection to connect wallet to Blockchain
     const connection = new ethers.providers.JsonRpcProvider(
-      `https://arb-mainnet.g.alchemy.com/v2/-F-${process.env.ALCHEMY_WEBSOCKET}`
+      `https://arb-mainnet.g.alchemy.com/v2/${process.env.ALCHEMY_WEBSOCKET}`
     );
     // Get Gas Price
     const gasPrice = connection.getGasPrice();
