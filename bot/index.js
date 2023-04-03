@@ -52,6 +52,7 @@ async function main(pk) {
   console.log("Bot is running");
 
   // let lastBuyCountdown = null;
+  let idleInterval = null;
 
   let camelot_route = "0xeb034303A3C4380Aa78b14B86681bd0bE730De1C";
   let lottery_number = randomGen(10);
@@ -117,6 +118,25 @@ async function main(pk) {
     //    send info to bot
     // if (lastBuyCountdown) clearTimeout(lastBuyCountdown)
     setLotteryNumber();
+  }
+
+  function pingIdleGroup(idleTimeSeconds, bot_data) {
+    if (idleInterval) clearInterval(idleInterval);
+    idleInterval = setInterval(() => {
+      isChannelIdle(idleTimeSeconds)
+        .then((result) => {
+          if (result) {
+            console.log("Channel is idle");
+            // send to bot
+            sendIdleMessage(bot_data);
+          } else {
+            console.log("Channel is active");
+          }
+        })
+        .catch((err) => {
+          console.log(err);
+        });
+    }, idleTimeSeconds * 1000);
   }
 
   async function sendRewards(addy, reward) {
@@ -212,7 +232,7 @@ async function main(pk) {
           let winner = false;
 
           // $100 => 1%
-          if (lottery_value >= 100 && lottery_value <= 200) {
+          if (lottery_value >= 1 && lottery_value <= 200) {
             lottery_number = randomGen(100);
             lottery_percentage = 1;
             console.log("1% buy lottery number =>", lottery_number);
@@ -286,6 +306,7 @@ async function main(pk) {
             eth: eth_spent,
             no_rush: no_tokens,
             usd: usd_spent,
+            rush_usd: usd_value,
             marketcap: marketcap,
             buyer_address: listener_to,
             current_jackpot: jackpot_reward,
@@ -298,26 +319,12 @@ async function main(pk) {
             winner: winner,
           };
 
-          const idleTimeSeconds = 300;
+          const idleTimeSeconds = 300; // 5 minutes
 
           console.log(bot_data);
           sendToBot(bot_data);
           updateDb(bot_data);
-          setInterval(() => {
-            isChannelIdle(idleTimeSeconds)
-              .then((result) => {
-                if (result) {
-                  console.log("Channel is idle");
-                  // send to bot
-                  sendIdleMessage(bot_data);
-                } else {
-                  console.log("Channel is active");
-                }
-              })
-              .catch((err) => {
-                console.log(err);
-              });
-          }, idleTimeSeconds * 1000);
+          pingIdleGroup(idleTimeSeconds, bot_data);
 
           // send to Bot
           console.log(JSON.stringify(info, null, 4));

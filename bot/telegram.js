@@ -25,7 +25,7 @@ function parseToMarkdown(text) {
     ".",
     "!",
   ];
-  let newText = text;
+  let newText = text.toString();
   charactersToEscape.forEach((character) => {
     newText = newText.replace(
       new RegExp("\\" + character, "g"),
@@ -52,14 +52,14 @@ const inlineKeyboard = [
       url: "https://arbirush.com/whitepaper/",
     },
     {
-      text: "Nitro Pools",
-      url: "https://app.camelot.exchange/nitro/0xeb034303a3c4380aa78b14b86681bd0be730de1c",
+      text: "Dexscreener",
+      url: "https://dexscreener.com/arbitrum/0xeb034303a3c4380aa78b14b86681bd0be730de1c",
     },
   ],
 ];
 
 function sendToBot(data) {
-  console.log(data);
+  // console.log(data);
   const winnerText = data.winner
     ? `🏆🏆🏆🏆🏆🏆🏆🏆🏆🏆🏆🏆🏆
 
@@ -77,16 +77,16 @@ function sendToBot(data) {
 Better luck winning next time\\!🤞🏼`;
 
   const bodyText = `
-*Current Jackpot:* ${parseToMarkdown(data.current_jackpot)}
-*Next Jackpot:* ${parseToMarkdown(data.next_jackpot)}
-*Third Jackpot:* ${parseToMarkdown(data.third_jackpot)}
+*Current Jackpot:* ${parseToMarkdown(data.current_jackpot)} ETH
+*Next Jackpot:* ${parseToMarkdown(data.next_jackpot)} ETH
+*Third Jackpot:* ${parseToMarkdown(data.third_jackpot)} ETH
 
 *Chances of Winning:* ${data.lottery_percentage}%
 
 *Paid:* ${parseToMarkdown(data.eth)} ETH
 *Bought:* ${parseToMarkdown(data.no_rush)} RUSH
 
-*$RUSH Price:* $${parseToMarkdown(data.usd)}
+*$RUSH Price:* $${parseToMarkdown(data.rush_usd)}
 *Market Cap:* ${parseToMarkdown(data.marketcap)}
         `;
   const footerText = `
@@ -135,13 +135,13 @@ Better luck winning next time\\!🤞🏼`;
 }
 
 function sendIdleMessage(data) {
-  console.log(data);
+  // console.log(data);
   const bodyText = `
-*Current Jackpot:* ${parseToMarkdown(data.current_jackpot)}
-*Next Jackpot:* ${parseToMarkdown(data.next_jackpot)}
-*Third Jackpot:* ${parseToMarkdown(data.third_jackpot)}
+*Current Jackpot:* ${parseToMarkdown(data.current_jackpot)} ETH
+*Next Jackpot:* ${parseToMarkdown(data.next_jackpot)} ETH
+*Third Jackpot:* ${parseToMarkdown(data.third_jackpot)} ETH
 
-*$RUSH Price:* $${parseToMarkdown(data.usd)}
+*$RUSH Price:* $${parseToMarkdown(data.rush_usd)}
 *Market Cap:* ${parseToMarkdown(data.marketcap)}
         `;
   const footerText = `
@@ -153,7 +153,7 @@ function sendIdleMessage(data) {
   const params = {
     chat_id: process.env.TELEGRAM_CHAT_ID,
     video:
-      "BAACAgQAAx0EcEgo4AACBYtkKdA4F6qUkKhaVbzjww7KO7wq6AACVxEAAky-SVHYEuPz-vPyjC8E",
+      "BAACAgQAAx0CcEgo4AACBZtkKpVvzm37EkYw-L3APKddAXK2sQAC1Q0AApKRUFHGXjbCMSDQXS8E",
     caption: `
             ${bodyText}
 
@@ -204,7 +204,7 @@ async function isChannelIdle(idleTimeSeconds = 300) {
   const data = response.data;
 
   if (data.ok && data.result && data.result.length > 0) {
-    const lastMessageDate = data.result[0].date;
+    const lastMessageDate = data.result[0].message.date;
     const now = Math.floor(Date.now() / 1000);
     const idleTime = now - lastMessageDate;
     return idleTime >= idleTimeSeconds; // Return true if idle time is 5 minutes or more
