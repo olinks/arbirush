@@ -104,12 +104,12 @@ Better luck winning next time\\!🤞🏼`;
 
 *Chances of Winning:* ${data.lottery_percentage}%
 
-*Paid:* ${parseToMarkdown(data.eth)} ETH \\(${parseToMarkdown(
-    (data.eth * data.eth_usd_price).toFixed(2)
+*Paid:* ${parseToMarkdown(data.eth.toFixed(4))} ETH \\($${parseToMarkdown(
+    (data.eth * data.eth_usd_price).toFixed(4)
   )}\\)
-*Bought:* ${parseToMarkdown(data.no_rush)} RUSH \\(${parseToMarkdown(
-    (data.eth * data.rush_usd).toFixed(2)
-  )}\\)
+*Bought:* ${parseToMarkdown(
+    data.no_rush.toFixed(4)
+  )} RUSH \\($${parseToMarkdown((data.eth * data.rush_usd).toFixed(4))}\\)
 
 *$RUSH Price:* $${parseToMarkdown(data.rush_usd)}
 *Market Cap:* $${parseToMarkdown(
