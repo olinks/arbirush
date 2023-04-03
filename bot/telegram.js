@@ -59,7 +59,6 @@ const inlineKeyboard = [
 ];
 
 function sendToBot(data) {
-  // console.log(data);
   const winnerText = data.winner
     ? `🐉🐉🐉🐉🐉🐉🐉🐉🐉🐉🐉🐉🐉🐉🐉🐉🐉🐉🐉🐉🐉🐉🐉🐉🐉🐉🐉🐉🐉
 
@@ -129,10 +128,8 @@ Better luck winning next time\\!🤞🏼`;
 *[💰Buy $RUSH Here](https://app.camelot.exchange/?token2=0xb70c114B20d1EE068Dd4f5F36E301d0B604FEC18)*
         `;
 
-  const notWinnerVideo =
-    "BAACAgQAAx0EcEgo4AACBYJkKbwsD3lv-PP2JA9Yix-bX7IrSAACPhEAAky-SVGvC0o2T5huoC8E";
-  const winnerVideo =
-    "BAACAgQAAx0EcEgo4AACBYFkKbvUAAEWBK-ryesWEbn-TP50e8IAAjkRAAJMvklRMI9F4GZUB-8vBA";
+  const notWinnerVideo = "jackpot-lose.mp4";
+  const winnerVideo = "jackpot-win.mp4";
   const params = {
     chat_id: process.env.TELEGRAM_CHAT_ID,
     video: data.winner === true ? winnerVideo : notWinnerVideo,
@@ -149,12 +146,26 @@ Better luck winning next time\\!🤞🏼`;
       inline_keyboard: inlineKeyboard,
     },
   };
+  const filePath = path.join(__dirname, "media", params.video);
+
+  const formData = new FormData();
+  formData.append("chat_id", params.chat_id);
+  formData.append("video", fs.createReadStream(filePath));
+  formData.append("caption", params.caption);
+  formData.append("parse_mode", params.parse_mode);
+  formData.append(
+    "disable_web_page_preview",
+    `${params.disable_web_page_preview}`
+  );
+  formData.append("reply_markup", JSON.stringify(params.reply_markup));
+
   axios
     .post(
       "https://api.telegram.org/bot" +
         process.env.TELEGRAM_BOT_TOKEN +
         "/sendVideo",
-      params
+      formData,
+      { headers: formData.getHeaders() }
     )
     .then((res) => {
       console.log("Telegram message sent");
@@ -166,8 +177,6 @@ Better luck winning next time\\!🤞🏼`;
 }
 
 function sendIdleMessage(data) {
-  // console.log(data);
-
   const bodyText = `
 *🥇Current Jackpot:* ${parseToMarkdown(
     data.current_jackpot.toFixed(2)
@@ -210,8 +219,7 @@ function sendIdleMessage(data) {
           `;
   const params = {
     chat_id: process.env.TELEGRAM_CHAT_ID,
-    video:
-      "BAACAgQAAx0CcEgo4AACBZtkKpVvzm37EkYw-L3APKddAXK2sQAC1Q0AApKRUFHGXjbCMSDQXS8E",
+    video: "intro-vid.mp4",
     caption: `
             ${bodyText}
 
@@ -223,12 +231,26 @@ function sendIdleMessage(data) {
       inline_keyboard: inlineKeyboard,
     },
   };
+  const filePath = path.join(__dirname, "media", params.video);
+
+  const formData = new FormData();
+  formData.append("chat_id", params.chat_id);
+  formData.append("video", fs.createReadStream(filePath));
+  formData.append("caption", params.caption);
+  formData.append("parse_mode", params.parse_mode);
+  formData.append(
+    "disable_web_page_preview",
+    `${params.disable_web_page_preview}`
+  );
+  formData.append("reply_markup", JSON.stringify(params.reply_markup));
+
   axios
     .post(
       "https://api.telegram.org/bot" +
         process.env.TELEGRAM_BOT_TOKEN +
         "/sendVideo",
-      params
+      formData,
+      { headers: formData.getHeaders() }
     )
     .then((res) => {
       console.log("Telegram message sent");
