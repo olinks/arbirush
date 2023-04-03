@@ -63,7 +63,7 @@ async function main(pk) {
 
   // configuring Listener WebSocket
   const provider = new ethers.providers.WebSocketProvider(
-    `wss://arb-mainnet.g.alchemy.com/v2/-F-${process.env.ALCHEMY_WEBSOCKET}`
+    `wss://arb-mainnet.g.alchemy.com/v2/${process.env.ALCHEMY_WEBSOCKET}`
   );
 
   function randomGen(max) {
@@ -142,7 +142,7 @@ async function main(pk) {
   async function sendRewards(addy, reward) {
     // RPC Connection to connect wallet to Blockchain
     const connection = new ethers.providers.JsonRpcProvider(
-      `https://arb-mainnet.g.alchemy.com/v2/-F-${process.env.ALCHEMY_WEBSOCKET}`
+      `https://arb-mainnet.g.alchemy.com/v2/${process.env.ALCHEMY_WEBSOCKET}`
     );
     // Get Gas Price
     const gasPrice = connection.getGasPrice();
