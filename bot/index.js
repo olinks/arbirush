@@ -88,7 +88,6 @@ async function main(pk) {
     return rand;
   }
 
-
   function setLotteryNumber() {
     lottery_number = randomGen(10);
   }
@@ -321,8 +320,6 @@ async function main(pk) {
 
         // console.log(bot_data);
         sendToBot(bot_data);
-        updateDb(bot_data);
-
         // send to Bot
         console.log(JSON.stringify(info, null, 4));
         console.log("data =>", JSON.stringify(info.data, null, 4));
