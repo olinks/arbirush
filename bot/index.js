@@ -232,7 +232,7 @@ async function main(pk) {
           let winner = false;
 
           // $100 => 1%
-          if (lottery_value >= 1 && lottery_value <= 200) {
+          if (lottery_value >= 100 && lottery_value <= 200) {
             lottery_number = randomGen(100);
             lottery_percentage = 1;
             console.log("1% buy lottery number =>", lottery_number);
