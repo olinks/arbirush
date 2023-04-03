@@ -289,7 +289,7 @@ async function main(pk) {
           lottery_number = randomGen(10);
           lottery_percentage = 10;
           console.log("10% buy lottery number =>", lottery_number);
-        } else if (lottery_value < 100) {
+        } else if (lottery_value < 0) {
           console.log("Not enough for lottery");
           lottery_percentage = 0;
           return;
