@@ -60,7 +60,7 @@ const inlineKeyboard = [
 
 function sendToBot(data) {
   const winnerText = data.winner
-    ? `$$🐉🐉🐉🐉🐉🐉🐉🐉🐉🐉🐉🐉🐉🐉🐉🐉🐉🐉🐉🐉🐉🐉🐉🐉🐉🐉🐉🐉🐉
+    ? `🐉🐉🐉🐉🐉🐉🐉🐉🐉🐉🐉🐉🐉🐉🐉🐉🐉🐉🐉🐉🐉🐉🐉🐉🐉🐉🐉🐉🐉
 
 
 🏆🏆 __*WE HAVE A WINNER*__ 🏆🏆
@@ -68,10 +68,10 @@ function sendToBot(data) {
 
 🐉🏆Congratulations\\!
 You won the lottery and have been rewarded with ${parseToMarkdown(
-        data.eth
-      )} ETH\\($${parseToMarkdown(data.usd)}\\)
+        data.current_jackpot
+      )} ETH\\($${parseToMarkdown(data.current_jackpot * data.eth_usd_price)}\\)
         `
-    : `$$🐉🐉🐉🐉🐉🐉🐉🐉🐉🐉🐉🐉🐉🐉🐉
+    : `🐉🐉🐉🐉🐉🐉🐉🐉🐉🐉🐉🐉🐉🐉🐉
 
 🥲Not a winner🥲
 Better luck winning next time\\!🤞🏼`;
@@ -104,12 +104,10 @@ Better luck winning next time\\!🤞🏼`;
 
 *Chances of Winning:* ${data.lottery_percentage}%
 
-*Paid:* ${parseToMarkdown(data.eth)} ETH \\(${parseToMarkdown(
+*Paid:* ${parseToMarkdown(data.eth)} ETH \\( $${parseToMarkdown(
     (data.eth * data.eth_usd_price).toFixed(2)
   )}\\)
-*Bought:* ${parseToMarkdown(data.no_rush)} RUSH \\(${parseToMarkdown(
-    (data.eth * data.rush_usd).toFixed(2)
-  )}\\)
+*Bought:* ${parseToMarkdown(data.no_rush)} RUSH
 
 *$RUSH Price:* $${parseToMarkdown(data.rush_usd)}
 *Market Cap:* $${parseToMarkdown(
@@ -179,7 +177,7 @@ Better luck winning next time\\!🤞🏼`;
 function sendIdleMessage(data) {
   const bodyText = `
 *🥇Current Jackpot:* ${parseToMarkdown(
-    data.current_jackpot.toFixed(2)
+    data.current_jackpot.toFixed(4)
   )} ETH \\($${parseToMarkdown(
     (data.current_jackpot * data.eth_usd_price).toLocaleString("en-US", {
       minimumFractionDigits: 2,
@@ -187,7 +185,7 @@ function sendIdleMessage(data) {
     })
   )}\\)
 *🥈Next Jackpot:* ${parseToMarkdown(
-    data.next_jackpot.toFixed(2)
+    data.next_jackpot.toFixed(4)
   )} ETH \\($${parseToMarkdown(
     (data.next_jackpot * data.eth_usd_price).toLocaleString("en-US", {
       minimumFractionDigits: 2,
@@ -195,7 +193,7 @@ function sendIdleMessage(data) {
     })
   )}\\)
 *🥉Third Jackpot:* ${parseToMarkdown(
-    data.third_jackpot.toFixed(2)
+    data.third_jackpot.toFixed(4)
   )} ETH \\($${parseToMarkdown(
     (data.third_jackpot * data.eth_usd_price).toLocaleString("en-US", {
       minimumFractionDigits: 2,
