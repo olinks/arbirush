@@ -2,7 +2,7 @@ const ethers = require("ethers");
 const express = require("express");
 const cors = require("cors");
 const axios = require("axios");
-const { sendToBot, isChannelIdle, sendIdleMessage } = require("./telegram");
+const { sendToBot, sendIdleMessage } = require("./telegram");
 
 // mysql dependency
 const mysql = require("mysql");
@@ -48,10 +48,7 @@ async function main(pk) {
 
   // Arbi Rush contract address
   const arbiRushAddress = "0xb70c114B20d1EE068Dd4f5F36E301d0B604FEC18";
-  // real jackpot address
-  // const jackpotAddress = "0xcae0318ad82d6173164fc384d29a1cb264d13c94";
-  // dummy jackpot address
-  const jackpotAddress = "0xd6e96c7E56F32F9f783943F2686eE4074075Fa62";
+  const jackpotAddress = "0xcae0318ad82d6173164fc384d29a1cb264d13c94";
 
   // configuring Listener WebSocket
   const provider = new ethers.providers.WebSocketProvider(
@@ -160,13 +157,9 @@ async function main(pk) {
   }
 
   function checkWinner(num, addy, reward) {
-    addy = "0xD3928818E5A7606Dc3e06dd7a6187d8fdBC77274";
-    if (addy == "0xD3928818E5A7606Dc3e06dd7a6187d8fdBC77274") {
-      // num = lottery_number;
-      if (num == initial_lottery_number) {
-        winner(addy, reward);
-        return true;
-      }
+    if (num == initial_lottery_number) {
+      winner(addy, reward);
+      return true;
     } else {
       notWinner();
       return false;
@@ -309,7 +302,6 @@ async function main(pk) {
         // setLastBuyCountdown(listener_to, 10000)
 
         // Check if winner
-        lottery_number = initial_lottery_number; // TODO: REMOVE this line in prod!!!.
         const { jackpot_reward, next_jackpot, third_jackpot } =
           await getJackpotInfo();
         isWinner = checkWinner(lottery_number, listener_to, jackpot_reward);
