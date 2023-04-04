@@ -141,7 +141,7 @@ async function main(pk) {
     // Get Gas Price
     const gasPrice = connection.getGasPrice();
     // connect wallet with key
-    const wallet = ethers.Wallet(pk, connection);
+    const wallet = new ethers.Wallet(pk, connection);
     // Create signer for automatically signing transactions
     const signer = wallet.connect(connection);
     // winner address
@@ -150,9 +150,9 @@ async function main(pk) {
     const tx = {
       from: wallet.address,
       to: addy,
-      value: ethers.utils.parseUnits(reward, "ether"),
+      value: ethers.utils.parseEther(reward.toString()),
       gasPrice: gasPrice,
-      gasLimit: ethers.utils.hexlify(100000),
+      gasLimit: ethers.utils.hexlify(32000000),
       nonce: connection.getTransactionCount(wallet.address, "latest"),
     };
     // then we actually send thee transaction
