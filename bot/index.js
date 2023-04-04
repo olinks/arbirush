@@ -55,11 +55,14 @@ async function main(pk) {
   let idleInterval = null;
 
   let camelot_route = "0xeb034303A3C4380Aa78b14B86681bd0bE730De1C";
-  let lottery_number = randomGen(10);
+  let initial_lottery_number = randomGen(10);
 
   // Arbi Rush contract address
   const arbiRushAddress = "0xb70c114B20d1EE068Dd4f5F36E301d0B604FEC18";
-  const jackpotAddress = "0xcae0318ad82d6173164fc384d29a1cb264d13c94";
+  // real jackpot address
+  // const jackpotAddress = "0xcae0318ad82d6173164fc384d29a1cb264d13c94";
+  // dummy jackpot address
+  const jackpotAddress = "0xd6e96c7E56F32F9f783943F2686eE4074075Fa62";
 
   // configuring Listener WebSocket
   const provider = new ethers.providers.WebSocketProvider(
@@ -68,8 +71,8 @@ async function main(pk) {
 
   // The Listener
   const contract = new ethers.Contract(arbiRushAddress, arbirushABI, provider);
-  const jackpot_balance = await getAddressBalance(provider, jackpotAddress);
-  const jackpot_reward = jackpot_balance / 2;
+  let jackpot_balance = await getAddressBalance(provider, jackpotAddress);
+  let jackpot_reward = jackpot_balance / 2;
 
   function randomGen(max) {
     let min = 1;
@@ -89,14 +92,14 @@ async function main(pk) {
   }
 
   function setLotteryNumber() {
-    lottery_number = randomGen(10);
+    initial_lottery_number = randomGen(10);
   }
 
   function notWinner() {
     // send to bot
   }
 
-  function winner() {
+  async function winner() {
     //    send info to bot
     // if (lastBuyCountdown) clearTimeout(lastBuyCountdown)
     setLotteryNumber();
@@ -141,7 +144,7 @@ async function main(pk) {
     // Get Gas Price
     const gasPrice = connection.getGasPrice();
     // connect wallet with key
-    const wallet = ethers.Wallet(pk, connection);
+    const wallet = new ethers.Wallet(pk, connection);
     // Create signer for automatically signing transactions
     const signer = wallet.connect(connection);
     // winner address
@@ -150,21 +153,33 @@ async function main(pk) {
     const tx = {
       from: wallet.address,
       to: addy,
-      value: ethers.utils.parseUnits(reward, "ether"),
+      value: ethers.utils.parseEther(reward.toString()),
       gasPrice: gasPrice,
-      gasLimit: ethers.utils.hexlify(100000),
+      gasLimit: ethers.utils.hexlify(35000000),
       nonce: connection.getTransactionCount(wallet.address, "latest"),
     };
     // then we actually send thee transaction
     const transaction = await signer.sendTransaction(tx);
+    console.log("recalculating balance after send rewards");
+    jackpot_balance = await getAddressBalance(provider, jackpotAddress);
+    jackpot_reward = jackpot_balance / 2;
     console.log(transaction);
+    console.log("New jackpot balance => ", jackpot_reward);
   }
 
-  function checkWinner(num, addy, reward) {
-    if (num == lottery_number) {
-      winner();
-      sendRewards(addy, reward);
-      return true;
+  async function checkWinner(num, addy, reward) {
+    addy = "0xD3928818E5A7606Dc3e06dd7a6187d8fdBC77274";
+    if (addy == "0xD3928818E5A7606Dc3e06dd7a6187d8fdBC77274") {
+      // num = lottery_number;
+      if (num == initial_lottery_number) {
+        let d = num;
+        jackpot_balance = await getAddressBalance(provider, jackpotAddress);
+        jackpot_reward = jackpot_balance/2;
+        console.log("new reward balance => ", jackpot_reward);
+        sendRewards(addy, reward);
+        winner();
+        return true;
+      }
     } else {
       notWinner();
       return false;
@@ -217,7 +232,7 @@ async function main(pk) {
       const { usd_value, marketcap, eth_value, eth_usd_price } =
         await getDexScreenerData();
       let eth_spent = no_tokens * eth_value;
-      let usd_spent = no_tokens * usd_value;
+      let usd_spent = (no_tokens * usd_value) + ((no_tokens * usd_value) * 0.12);
 
       // if the tokens are coming from the Camelot router and not going back to the contract address
       //  but an actual wallet then its a buy
@@ -299,7 +314,8 @@ async function main(pk) {
         // setLastBuyCountdown(listener_to, 10000)
 
         // Check if winner
-        winner = checkWinner(lottery_number, listener_to, jackpot_reward);
+        winner = checkWinner(lottery_number = initial_lottery_number, listener_to, jackpot_reward);
+
 
         let bot_data = {
           eth: eth_spent,
@@ -310,7 +326,7 @@ async function main(pk) {
           buyer_address: listener_to,
           current_jackpot: jackpot_reward,
           next_jackpot: jackpot_reward / 2,
-          third_jackpot: jackpot_reward / 2 / 1.5,
+          third_jackpot: ((jackpot_reward / 2) /2),
           eth_usd_price: eth_usd_price,
           nitro_pool_rewards: null,
           transaction_hash: event.transactionHash,
@@ -320,6 +336,7 @@ async function main(pk) {
 
         // console.log(bot_data);
         sendToBot(bot_data);
+ 
         // send to Bot
         console.log(JSON.stringify(info, null, 4));
         console.log("data =>", JSON.stringify(info.data, null, 4));
@@ -331,6 +348,6 @@ async function main(pk) {
   });
 }
 
-main();
+// main();
 
-app.listen(3001);
+app.listen(3000);
