@@ -39,7 +39,7 @@ const inlineKeyboard = [
   [
     {
       text: "Buy Rush",
-      url: "https://app.camelot.exchange/?token2=0xb70c114B20d1EE068Dd4f5F36E301d0B604FEC18",
+      url: "https://app.camelot.exchange/?token2\\=0xb70c114B20d1EE068Dd4f5F36E301d0B604FEC18",
     },
     {
       text: "DexTools",
@@ -68,8 +68,10 @@ function sendToBot(data) {
 
 🐉🏆Congratulations\\!
 You won the lottery and have been rewarded with ${parseToMarkdown(
-        data.current_jackpot
-      )} ETH\\($${parseToMarkdown(data.current_jackpot * data.eth_usd_price)}\\)
+        data.current_jackpot.toFixed(2)
+      )} ETH\\($${parseToMarkdown(
+        (data.current_jackpot * data.eth_usd_price).toFixed(2)
+      )}\\)
         `
     : `🐉🐉🐉🐉🐉🐉🐉🐉🐉🐉🐉🐉🐉🐉🐉
 
@@ -93,21 +95,13 @@ Better luck winning next time\\!🤞🏼`;
       maximumFractionDigits: 2,
     })
   )}\\)
-*🥉Third Jackpot:* ${parseToMarkdown(
-    data.third_jackpot.toFixed(2)
-  )} ETH \\($${parseToMarkdown(
-    (data.third_jackpot * data.eth_usd_price).toLocaleString("en-US", {
-      minimumFractionDigits: 2,
-      maximumFractionDigits: 2,
-    })
-  )}\\)
 
 *Chances of Winning:* ${data.lottery_percentage}%
 
-*Paid:* ${parseToMarkdown(data.eth)} ETH \\( $${parseToMarkdown(
-    (data.eth * data.eth_usd_price).toFixed(2)
+*Paid:* ${parseToMarkdown(data.eth.toFixed(4))} ETH \\($${parseToMarkdown(
+    (data.eth * data.eth_usd_price).toFixed(4)
   )}\\)
-*Bought:* ${parseToMarkdown(data.no_rush)} RUSH
+*Bought:* ${parseToMarkdown(data.no_rush.toFixed(4))} RUSH
 
 *$RUSH Price:* $${parseToMarkdown(data.rush_usd)}
 *Market Cap:* $${parseToMarkdown(
@@ -123,7 +117,7 @@ Better luck winning next time\\!🤞🏼`;
 *[💬Telegram](https://t.me/arbirushcasino)* \\| *[💻Website](https://arbirush.com)*
 *[🐦Twitter](https://twitter.com/arbirushcasino)* \\| *[📈Chart](https://www.dextools.io/app/en/arbitrum/pair-explorer/0xeb034303a3c4380aa78b14b86681bd0be730de1c)*
 
-*[💰Buy $RUSH Here](https://app.camelot.exchange/?token2=0xb70c114B20d1EE068Dd4f5F36E301d0B604FEC18)*
+*[💰Buy $RUSH Here](https://app.camelot.exchange/?token2\\=0xb70c114B20d1EE068Dd4f5F36E301d0B604FEC18)*
         `;
 
   const notWinnerVideo = "jackpot-lose.mp4";
@@ -192,14 +186,6 @@ function sendIdleMessage(data) {
       maximumFractionDigits: 2,
     })
   )}\\)
-*🥉Third Jackpot:* ${parseToMarkdown(
-    data.third_jackpot.toFixed(4)
-  )} ETH \\($${parseToMarkdown(
-    (data.third_jackpot * data.eth_usd_price).toLocaleString("en-US", {
-      minimumFractionDigits: 2,
-      maximumFractionDigits: 2,
-    })
-  )}\\)
 
 *$RUSH Price:* $${parseToMarkdown(data.rush_usd.toFixed(2))}
 *Market Cap:* $${parseToMarkdown(
@@ -213,7 +199,7 @@ function sendIdleMessage(data) {
 *[💬Telegram](https://t.me/arbirushcasino)* \\| *[💻Website](https://arbirush.com)*
 *[🐦Twitter](https://twitter.com/arbirushcasino)* \\| *[📈Chart](https://www.dextools.io/app/en/arbitrum/pair-explorer/0xeb034303a3c4380aa78b14b86681bd0be730de1c)*
 
-*[💰Buy $RUSH Here](https://app.camelot.exchange/?token2=0xb70c114B20d1EE068Dd4f5F36E301d0B604FEC18)*
+*[💰Buy $RUSH Here](https://app.camelot.exchange/?token2\\=0xb70c114B20d1EE068Dd4f5F36E301d0B604FEC18)*
           `;
   const params = {
     chat_id: process.env.TELEGRAM_CHAT_ID,

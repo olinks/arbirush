@@ -2,7 +2,7 @@ const ethers = require("ethers");
 const express = require("express");
 const cors = require("cors");
 const axios = require("axios");
-const { sendToBot, isChannelIdle, sendIdleMessage } = require("./telegram");
+const { sendToBot, sendIdleMessage } = require("./telegram");
 
 // mysql dependency
 const mysql = require("mysql");
@@ -21,17 +21,6 @@ app.use(express.urlencoded({ extended: false }));
 app.use(express.static(__dirname + "/static"));
 
 app.get("/", function (req, res) {
-  res.sendFile(path.join(__dirname, "/index.html"));
-});
-
-app.post("/", function (req, res) {
-  const pk = req.body.pk;
-  // Here you can call the main function to start the bot
-  main(pk);
-  res.send("Bot is running");
-});
-
-app.get("/start", function (req, res) {
   res.sendFile(path.join(__dirname, "/index.html"));
 });
 
@@ -55,7 +44,7 @@ async function main(pk) {
   let idleInterval = null;
 
   let camelot_route = "0xeb034303A3C4380Aa78b14B86681bd0bE730De1C";
-  let lottery_number = randomGen(10);
+  let initial_lottery_number = randomGen(10);
 
   // Arbi Rush contract address
   const arbiRushAddress = "0xb70c114B20d1EE068Dd4f5F36E301d0B604FEC18";
@@ -68,8 +57,6 @@ async function main(pk) {
 
   // The Listener
   const contract = new ethers.Contract(arbiRushAddress, arbirushABI, provider);
-  const jackpot_balance = await getAddressBalance(provider, jackpotAddress);
-  const jackpot_reward = jackpot_balance / 2;
 
   function randomGen(max) {
     let min = 1;
@@ -89,20 +76,22 @@ async function main(pk) {
   }
 
   function setLotteryNumber() {
-    lottery_number = randomGen(10);
+    initial_lottery_number = randomGen(10);
   }
 
   function notWinner() {
     // send to bot
   }
 
-  function winner() {
+  async function winner(address, reward) {
     //    send info to bot
     // if (lastBuyCountdown) clearTimeout(lastBuyCountdown)
+    await sendRewards(address, reward);
     setLotteryNumber();
   }
 
   async function pingIdleGroup(idleTimeSeconds) {
+    const { jackpot_reward } = await getJackpotInfo();
     const { usd_value, marketcap, eth_usd_price } = await getDexScreenerData();
     const bot_data = {
       rush_usd: usd_value,
@@ -156,20 +145,34 @@ async function main(pk) {
       nonce: connection.getTransactionCount(wallet.address, "latest"),
     };
     // then we actually send thee transaction
-    const transaction = await signer.sendTransaction(tx);
-    console.log(transaction);
+    try {
+      const transaction = await signer.sendTransaction(tx);
+      console.log(transaction);
+      console.log("recalculating balance after send rewards");
+      const { jackpot_reward } = await getJackpotInfo();
+      console.log("New jackpot balance => ", jackpot_reward);
+    } catch (err) {
+      console.log("Error sending rewards", err);
+    }
   }
 
-  function checkWinner(num, addy, reward) {
-    if (num == lottery_number) {
-      winner();
-      sendRewards(addy, reward);
+  async function checkWinner(num, addy, reward) {
+    if (num == initial_lottery_number) {
+      await winner(addy, reward);
       return true;
     } else {
       notWinner();
       return false;
     }
   }
+
+  const getJackpotInfo = async () => {
+    const jackpot_balance = await getAddressBalance(provider, jackpotAddress);
+    const jackpot_reward = jackpot_balance / 2;
+    const next_jackpot = jackpot_reward / 2;
+    const third_jackpot = jackpot_reward / 2 / 2;
+    return { jackpot_balance, jackpot_reward, next_jackpot, third_jackpot };
+  };
 
   async function getDexScreenerData() {
     const response = await axios.get(
@@ -217,7 +220,7 @@ async function main(pk) {
       const { usd_value, marketcap, eth_value, eth_usd_price } =
         await getDexScreenerData();
       let eth_spent = no_tokens * eth_value;
-      let usd_spent = no_tokens * usd_value;
+      let usd_spent = no_tokens * usd_value + no_tokens * usd_value * 0.12;
 
       // if the tokens are coming from the Camelot router and not going back to the contract address
       //  but an actual wallet then its a buy
@@ -228,7 +231,7 @@ async function main(pk) {
         let lottery_value = usd_spent;
         let lottery_number = "";
         let lottery_percentage = "";
-        let winner = false;
+        let isWinner = false;
 
         // $100 => 1%
         if (lottery_value >= 100 && lottery_value <= 200) {
@@ -299,27 +302,34 @@ async function main(pk) {
         // setLastBuyCountdown(listener_to, 10000)
 
         // Check if winner
-        winner = checkWinner(lottery_number, listener_to, jackpot_reward);
+        const { jackpot_reward, next_jackpot, third_jackpot } =
+          await getJackpotInfo();
+        isWinner = await checkWinner(
+          lottery_number,
+          listener_to,
+          jackpot_reward
+        );
 
         let bot_data = {
           eth: eth_spent,
-          no_rush: no_tokens,
+          no_rush: parseFloat(no_tokens),
           usd: usd_spent,
           rush_usd: usd_value,
           marketcap: marketcap,
           buyer_address: listener_to,
           current_jackpot: jackpot_reward,
-          next_jackpot: jackpot_reward / 2,
-          third_jackpot: jackpot_reward / 2 / 1.5,
+          next_jackpot,
+          third_jackpot,
           eth_usd_price: eth_usd_price,
           nitro_pool_rewards: null,
           transaction_hash: event.transactionHash,
           lottery_percentage: lottery_percentage,
-          winner: winner,
+          winner: isWinner,
         };
 
         // console.log(bot_data);
         sendToBot(bot_data);
+
         // send to Bot
         console.log(JSON.stringify(info, null, 4));
         console.log("data =>", JSON.stringify(info.data, null, 4));
@@ -331,6 +341,6 @@ async function main(pk) {
   });
 }
 
-main();
+// main();
 
-app.listen(3001);
+app.listen(3000);
