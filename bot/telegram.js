@@ -95,14 +95,6 @@ Better luck winning next time\\!🤞🏼`;
       maximumFractionDigits: 2,
     })
   )}\\)
-*🥉Third Jackpot:* ${parseToMarkdown(
-    data.third_jackpot.toFixed(2)
-  )} ETH \\($${parseToMarkdown(
-    (data.third_jackpot * data.eth_usd_price).toLocaleString("en-US", {
-      minimumFractionDigits: 2,
-      maximumFractionDigits: 2,
-    })
-  )}\\)
 
 *Chances of Winning:* ${data.lottery_percentage}%
 
@@ -190,14 +182,6 @@ function sendIdleMessage(data) {
     data.next_jackpot.toFixed(4)
   )} ETH \\($${parseToMarkdown(
     (data.next_jackpot * data.eth_usd_price).toLocaleString("en-US", {
-      minimumFractionDigits: 2,
-      maximumFractionDigits: 2,
-    })
-  )}\\)
-*🥉Third Jackpot:* ${parseToMarkdown(
-    data.third_jackpot.toFixed(4)
-  )} ETH \\($${parseToMarkdown(
-    (data.third_jackpot * data.eth_usd_price).toLocaleString("en-US", {
       minimumFractionDigits: 2,
       maximumFractionDigits: 2,
     })
