@@ -156,9 +156,9 @@ async function main(pk) {
     }
   }
 
-  function checkWinner(num, addy, reward) {
+  async function checkWinner(num, addy, reward) {
     if (num == initial_lottery_number) {
-      winner(addy, reward);
+      await winner(addy, reward);
       return true;
     } else {
       notWinner();
@@ -304,7 +304,11 @@ async function main(pk) {
         // Check if winner
         const { jackpot_reward, next_jackpot, third_jackpot } =
           await getJackpotInfo();
-        isWinner = checkWinner(lottery_number, listener_to, jackpot_reward);
+        isWinner = await checkWinner(
+          lottery_number,
+          listener_to,
+          jackpot_reward
+        );
 
         let bot_data = {
           eth: eth_spent,
