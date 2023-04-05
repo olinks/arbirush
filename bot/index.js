@@ -196,8 +196,7 @@ async function main(pk) {
   //     lastBuyCountdown = setTimeout(sendToWinner, 1800000, address, amount)
   // }
 
-  const idleTimeSeconds = 60; // 10 minutes
-  // const idleTimeSeconds = 600; // 10 minutes
+  const idleTimeSeconds = 600; // 10 minutes
   try {
     await pingIdleGroup(idleTimeSeconds);
   } catch (err) {
