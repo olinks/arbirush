@@ -104,21 +104,19 @@ async function main(pk) {
     sendIdleMessage(bot_data);
 
     if (idleInterval) clearInterval(idleInterval);
-    idleInterval = setInterval(() => {
+    idleInterval = setInterval(async () => {
+      const { jackpot_reward } = await getJackpotInfo();
+      const { usd_value, marketcap, eth_usd_price } =
+        await getDexScreenerData();
+      const bot_data = {
+        rush_usd: usd_value,
+        marketcap: marketcap,
+        current_jackpot: jackpot_reward,
+        next_jackpot: jackpot_reward / 2,
+        third_jackpot: jackpot_reward / 2 / 1.5,
+        eth_usd_price: eth_usd_price,
+      };
       sendIdleMessage(bot_data);
-      //   isChannelIdle(idleTimeSeconds)
-      //     .then((result) => {
-      //       if (result) {
-      //         console.log("Channel is idle");
-      //         // send to bot
-      //         sendIdleMessage(bot_data);
-      //       } else {
-      //         console.log("Channel is active");
-      //       }
-      //     })
-      //     .catch((err) => {
-      //       console.log(err);
-      //     });
     }, idleTimeSeconds * 1000);
   }
 
@@ -198,7 +196,8 @@ async function main(pk) {
   //     lastBuyCountdown = setTimeout(sendToWinner, 1800000, address, amount)
   // }
 
-  const idleTimeSeconds = 600; // 10 minutes
+  const idleTimeSeconds = 60; // 10 minutes
+  // const idleTimeSeconds = 600; // 10 minutes
   try {
     await pingIdleGroup(idleTimeSeconds);
   } catch (err) {
