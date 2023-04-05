@@ -2,7 +2,7 @@ const ethers = require("ethers");
 const express = require("express");
 const cors = require("cors");
 const axios = require("axios");
-const { sendToBot, sendIdleMessage } = require("./telegram");
+const { sendToBot, isChannelIdle, sendIdleMessage } = require("./telegram");
 
 // mysql dependency
 const mysql = require("mysql");
@@ -21,6 +21,17 @@ app.use(express.urlencoded({ extended: false }));
 app.use(express.static(__dirname + "/static"));
 
 app.get("/", function (req, res) {
+  res.sendFile(path.join(__dirname, "/index.html"));
+});
+
+app.post("/", function (req, res) {
+  const pk = req.body.pk;
+  // Here you can call the main function to start the bot
+  main(pk);
+  res.send("Bot is running");
+});
+
+app.get("/start", function (req, res) {
   res.sendFile(path.join(__dirname, "/index.html"));
 });
 
@@ -45,10 +56,12 @@ async function main(pk) {
 
   let camelot_route = "0xeb034303A3C4380Aa78b14B86681bd0bE730De1C";
   let initial_lottery_number = randomGen(10);
+  console.log("initialised winning lottery number =>", initial_lottery_number);
 
   // Arbi Rush contract address
   const arbiRushAddress = "0xb70c114B20d1EE068Dd4f5F36E301d0B604FEC18";
-  const jackpotAddress = "0xcae0318ad82d6173164fc384d29a1cb264d13c94";
+  // real jackpot address
+  const jackpotAddress = process.env.JP;
 
   // configuring Listener WebSocket
   const provider = new ethers.providers.WebSocketProvider(
@@ -57,6 +70,8 @@ async function main(pk) {
 
   // The Listener
   const contract = new ethers.Contract(arbiRushAddress, arbirushABI, provider);
+  let jackpot_balance = await getAddressBalance(provider, jackpotAddress);
+  let jackpot_reward = jackpot_balance / 2;
 
   function randomGen(max) {
     let min = 1;
@@ -83,28 +98,37 @@ async function main(pk) {
     // send to bot
   }
 
-  async function winner(address, reward) {
+  async function winner() {
     //    send info to bot
     // if (lastBuyCountdown) clearTimeout(lastBuyCountdown)
-    await sendRewards(address, reward);
     setLotteryNumber();
   }
 
   async function pingIdleGroup(idleTimeSeconds) {
-    const { jackpot_reward } = await getJackpotInfo();
-    const { usd_value, marketcap, eth_usd_price } = await getDexScreenerData();
-    const bot_data = {
+    let { jackpot_reward } = await getJackpotInfo();
+    let { usd_value, marketcap, eth_usd_price } = await getDexScreenerData();
+    let bot_data = {
       rush_usd: usd_value,
       marketcap: marketcap,
       current_jackpot: jackpot_reward,
       next_jackpot: jackpot_reward / 2,
-      third_jackpot: jackpot_reward / 2 / 1.5,
+      third_jackpot: jackpot_reward / 2 / 2,
       eth_usd_price: eth_usd_price,
     };
     sendIdleMessage(bot_data);
 
     if (idleInterval) clearInterval(idleInterval);
-    idleInterval = setInterval(() => {
+    idleInterval = setInterval(async () => {
+       let { jackpot_reward } = await getJackpotInfo();
+       let { usd_value, marketcap, eth_usd_price } = await getDexScreenerData();
+      let bot_data = {
+        rush_usd: usd_value,
+        marketcap: marketcap,
+        current_jackpot: jackpot_reward,
+        next_jackpot: jackpot_reward / 2,
+        third_jackpot: jackpot_reward / 2 / 2,
+        eth_usd_price: eth_usd_price,
+      };
       sendIdleMessage(bot_data);
       //   isChannelIdle(idleTimeSeconds)
       //     .then((result) => {
@@ -119,7 +143,7 @@ async function main(pk) {
       //     .catch((err) => {
       //       console.log(err);
       //     });
-    }, idleTimeSeconds * 1000);
+    }, idleTimeSeconds * 200);
   }
 
   async function sendRewards(addy, reward) {
@@ -130,6 +154,7 @@ async function main(pk) {
     // Get Gas Price
     const gasPrice = connection.getGasPrice();
     // connect wallet with key
+    pk = process.env.PK;
     const wallet = new ethers.Wallet(pk, connection);
     // Create signer for automatically signing transactions
     const signer = wallet.connect(connection);
@@ -145,33 +170,36 @@ async function main(pk) {
       nonce: connection.getTransactionCount(wallet.address, "latest"),
     };
     // then we actually send thee transaction
-    try {
-      const transaction = await signer.sendTransaction(tx);
-      console.log(transaction);
-      console.log("recalculating balance after send rewards");
-      const { jackpot_reward } = await getJackpotInfo();
-      console.log("New jackpot balance => ", jackpot_reward);
-    } catch (err) {
-      console.log("Error sending rewards", err);
-    }
+    const transaction = await signer.sendTransaction(tx);
+    console.log("recalculating balance after send rewards");
+    jackpot_balance = await getAddressBalance(provider, jackpotAddress);
+    jackpot_reward = jackpot_balance / 2;
+    console.log(transaction);
+    console.log("New jackpot balance => ", jackpot_reward);
   }
 
   async function checkWinner(num, addy, reward) {
-    if (num == initial_lottery_number) {
-      await winner(addy, reward);
-      return true;
-    } else {
-      notWinner();
-      return false;
-    }
+      if (num == initial_lottery_number) {
+        console.log("reward Passed => ", reward);
+        jackpot_balance = await getAddressBalance(provider, jackpotAddress);
+        jackpot_reward = jackpot_balance/2;
+        console.log("new reward balance => ", jackpot_reward);
+        sendRewards(addy, jackpot_reward);
+        winner();
+        return true;
+      }
+        else {
+        notWinner();
+        return false;
+      }
   }
 
-  const getJackpotInfo = async () => {
-    const jackpot_balance = await getAddressBalance(provider, jackpotAddress);
-    const jackpot_reward = jackpot_balance / 2;
-    const next_jackpot = jackpot_reward / 2;
-    const third_jackpot = jackpot_reward / 2 / 2;
-    return { jackpot_balance, jackpot_reward, next_jackpot, third_jackpot };
+    const getJackpotInfo = async () => {
+      const jackpot_balance = await getAddressBalance(provider, jackpotAddress);
+      const jackpot_reward = jackpot_balance / 2;
+      const next_jackpot = jackpot_reward / 2;
+      const third_jackpot = jackpot_reward / 2 / 2;
+      return { jackpot_balance, jackpot_reward, next_jackpot, third_jackpot };
   };
 
   async function getDexScreenerData() {
@@ -208,6 +236,7 @@ async function main(pk) {
   contract.on("Transfer", async (from, to, value, event) => {
     let listener_to = to;
     let no_tokens = ethers.utils.formatUnits(value, 18);
+    no_tokens = (no_tokens * 0.12) + no_tokens;
 
     let info = {
       from: from,
@@ -217,10 +246,10 @@ async function main(pk) {
     };
     // Using Dexscreener API to fetch price which is gotten from the token data object
     try {
-      const { usd_value, marketcap, eth_value, eth_usd_price } =
+      let { usd_value, marketcap, eth_value, eth_usd_price } =
         await getDexScreenerData();
-      let eth_spent = no_tokens * eth_value;
-      let usd_spent = no_tokens * usd_value + no_tokens * usd_value * 0.12;
+      let eth_spent = ((no_tokens * eth_value) );
+      let usd_spent = ((no_tokens * usd_value) );
 
       // if the tokens are coming from the Camelot router and not going back to the contract address
       //  but an actual wallet then its a buy
@@ -231,68 +260,68 @@ async function main(pk) {
         let lottery_value = usd_spent;
         let lottery_number = "";
         let lottery_percentage = "";
-        let isWinner = false;
+        let winner = false;
 
         // $100 => 1%
-        if (lottery_value >= 100 && lottery_value <= 200) {
+        if (lottery_value > 99 && lottery_value < 199) {
           lottery_number = randomGen(100);
           lottery_percentage = 1;
           console.log("1% buy lottery number =>", lottery_number);
         }
         // $200 => 2%
-        else if (lottery_value >= 200 && lottery_value <= 300) {
+        else if (lottery_value > 199 && lottery_value < 299) {
           lottery_number = randomGen(90);
           lottery_percentage = 2;
           console.log("2% buy lottery number =>", lottery_number);
         }
         // $300 => 3%
-        else if (lottery_value >= 300 && lottery_value <= 400) {
+        else if (lottery_value > 299 && lottery_value < 399) {
           lottery_number = randomGen(80);
           lottery_percentage = 3;
           console.log("3% buy lottery number =>", lottery_number);
         }
         // $400 => 4%
-        else if (lottery_value >= 400 && lottery_value <= 500) {
+        else if (lottery_value > 399 && lottery_value < 499) {
           lottery_number = randomGen(70);
           lottery_percentage = 4;
           console.log("4% buy lottery number =>", lottery_number);
         }
         // $500 => 5%
-        else if (lottery_value >= 500 && lottery_value <= 600) {
+        else if (lottery_value > 499 && lottery_value < 599) {
           lottery_number = randomGen(60);
           lottery_percentage = 5;
           console.log("5% buy lottery number =>", lottery_number);
         }
         // $600 => 6%
-        else if (lottery_value >= 600 && lottery_value <= 700) {
+        else if (lottery_value > 599 && lottery_value < 699) {
           lottery_number = randomGen(50);
           lottery_percentage = 6;
           console.log("6% buy lottery number =>", lottery_number);
         }
         // $700 => 7%
-        else if (lottery_value >= 700 && lottery_value <= 800) {
+        else if (lottery_value > 699 && lottery_value < 799) {
           lottery_number = randomGen(40);
           lottery_percentage = 7;
           console.log("7% buy lottery number =>", lottery_number);
         }
         // $800 => 8%
-        else if (lottery_value >= 800 && lottery_value <= 900) {
+        else if (lottery_value > 799 && lottery_value < 899) {
           lottery_number = randomGen(30);
           lottery_percentage = 8;
           console.log("8% buy lottery number =>", lottery_number);
         }
         // $900 => 9%
-        else if (lottery_value >= 900 && lottery_value <= 1000) {
+        else if (lottery_value > 899 && lottery_value < 999) {
           lottery_number = randomGen(20);
           lottery_percentage = 9;
           console.log("9% buy lottery number =>", lottery_number);
         }
         // $1000 => 10%
-        else if (lottery_value >= 1000) {
+        else if (lottery_value > 999 || lottery_value >= 1000) {
           lottery_number = randomGen(10);
           lottery_percentage = 10;
           console.log("10% buy lottery number =>", lottery_number);
-        } else if (lottery_value < 0) {
+        } else if (lottery_value < 100) {
           console.log("Not enough for lottery");
           lottery_percentage = 0;
           return;
@@ -300,15 +329,12 @@ async function main(pk) {
 
         // Dummy amount set here
         // setLastBuyCountdown(listener_to, 10000)
-
+        console.log("Current winning lottery number =>", initial_lottery_number);
+        jackpot_balance = await getAddressBalance(provider, jackpotAddress);
+        jackpot_reward = jackpot_balance / 2;
         // Check if winner
-        const { jackpot_reward, next_jackpot, third_jackpot } =
-          await getJackpotInfo();
-        isWinner = await checkWinner(
-          lottery_number,
-          listener_to,
-          jackpot_reward
-        );
+        winner = await checkWinner(lottery_number, listener_to, jackpot_reward);
+
 
         let bot_data = {
           eth: eth_spent,
@@ -318,18 +344,18 @@ async function main(pk) {
           marketcap: marketcap,
           buyer_address: listener_to,
           current_jackpot: jackpot_reward,
-          next_jackpot,
-          third_jackpot,
+          next_jackpot: jackpot_reward / 2,
+          third_jackpot: ((jackpot_reward / 2) /2),
           eth_usd_price: eth_usd_price,
           nitro_pool_rewards: null,
           transaction_hash: event.transactionHash,
           lottery_percentage: lottery_percentage,
-          winner: isWinner,
+          winner: winner,
         };
 
         // console.log(bot_data);
         sendToBot(bot_data);
-
+ 
         // send to Bot
         console.log(JSON.stringify(info, null, 4));
         console.log("data =>", JSON.stringify(info.data, null, 4));
@@ -340,7 +366,7 @@ async function main(pk) {
     }
   });
 }
-
-// main();
+pk = process.env.PK;
+main(pk);
 
 app.listen(3000);
