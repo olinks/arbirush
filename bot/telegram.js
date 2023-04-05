@@ -187,7 +187,7 @@ function sendIdleMessage(data) {
     })
   )}\\)
 
-*$RUSH Price:* $${parseToMarkdown(data.rush_usd.toFixed(2))}
+*$RUSH Price:* $${parseToMarkdown(data.rush_usd)}
 *Market Cap:* $${parseToMarkdown(
     data.marketcap.toLocaleString("en-US", {
       minimumFractionDigits: 2,
