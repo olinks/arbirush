@@ -417,6 +417,7 @@ async function main(pk) {
           transaction_hash: event.transactionHash,
           lottery_percentage: lottery_percentage,
           winner: winner,
+          lottery_value,
         };
 
         // console.log(bot_data);

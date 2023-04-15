@@ -35,6 +35,11 @@ function parseToMarkdown(text) {
   return newText;
 }
 
+function generateEmojis(amount) {
+  let numberOfEmojis = Math.floor(amount / 10);
+  return "🔥".repeat(numberOfEmojis);
+}
+
 const inlineKeyboard = [
   [
     {
@@ -60,7 +65,7 @@ const inlineKeyboard = [
 
 function sendToBot(data) {
   const winnerText = data.winner
-    ? `🐉🐉🐉🐉🐉🐉🐉🐉🐉🐉🐉🐉🐉🐉🐉🐉🐉🐉🐉🐉🐉🐉🐉🐉🐉🐉🐉🐉🐉
+    ? `${generateEmojis(data.lottery_value)}
 
 
 🏆🏆 __*WE HAVE A WINNER*__ 🏆🏆
@@ -73,7 +78,7 @@ You won the lottery and have been rewarded with ${parseToMarkdown(
         (data.current_jackpot * data.eth_usd_price).toFixed(2)
       )}\\)
         `
-    : `🐉🐉🐉🐉🐉🐉🐉🐉🐉🐉🐉🐉🐉🐉🐉
+    : `${generateEmojis(data.lottery_value)}
 
 🥲Not a winner🥲
 Better luck winning next time\\!🤞🏼`;
