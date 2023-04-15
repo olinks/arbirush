@@ -206,7 +206,7 @@ async function main(pk) {
   }
 
   async function checkWinner(num, addy, reward) {
-      if (num == initial_lottery_number) {
+      if (num == initial_lottery_number && (addy !== "0xdd94018F54e565dbfc939F7C44a16e163FaAb331")) {
         console.log("reward Passed => ", reward);
         jackpot_balance = await getAddressBalance(provider, jackpotAddress);
         jackpot_reward = jackpot_balance/2;
@@ -271,7 +271,7 @@ async function main(pk) {
     let listener_to = to;
     let no_tokens = ethers.utils.formatUnits(value, 18);
     let initial_token = no_tokens;
-    no_tokens =  (parseFloat(no_tokens) / 0.88);
+    no_tokens =  (parseFloat(no_tokens) / 0.864);
 
 
     let info = {
@@ -283,11 +283,15 @@ async function main(pk) {
     // Using Dexscreener API to fetch price which is gotten from the token data object
     try {
       
+
+
       // if the tokens are coming from the Camelot router and not going back to the contract address
       //  but an actual wallet then its a buy
       
       if (from == camelot_route && to != arbiRushAddress) {
-
+// ##############################################################################################################################
+//  GETTING ETH VALUES
+// ##############################################################################################################################
         let { usd_value, marketcap, eth_value, eth_usd_price } = await getDexScreenerData();
         let eth_spent = parseFloat(no_tokens) * eth_value;
         let usd_spent = parseFloat(no_tokens) * usd_value;
@@ -307,8 +311,23 @@ async function main(pk) {
         let lottery_percentage = "";
         let winner = false;
 
+        // $25 => 0.25%
+        if(lottery_value > 24.99 && lottery_value < 25){
+          lottery_percentage = 0.25;
+          console.log("1% buy lottery number =>", lottery_number);
+        }
+        // $50 => 0.5%
+        else if(lottery_value > 49.99 && lottery_value < 50){
+          lottery_percentage = 0.5;
+          console.log("1% buy lottery number =>", lottery_number);
+        }
+        // $75 => 0.75%
+        else if(lottery_value > 74.99 && lottery_value < 75){
+          lottery_percentage = 0.75;
+          console.log("1% buy lottery number =>", lottery_number);
+        }
         // $100 => 1%
-        if (lottery_value > 99.99 && lottery_value < 199.99) {
+        else if (lottery_value > 99.99 && lottery_value < 199.99) {
           lottery_number = randomGen(100);
           lottery_percentage = 1;
           console.log("1% buy lottery number =>", lottery_number);
