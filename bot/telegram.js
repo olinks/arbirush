@@ -35,6 +35,11 @@ function parseToMarkdown(text) {
   return newText;
 }
 
+function generateEmojis(amount) {
+  let numberOfEmojis = Math.floor(amount / 10);
+  return "🔥".repeat(numberOfEmojis);
+}
+
 const inlineKeyboard = [
   [
     {
@@ -60,7 +65,7 @@ const inlineKeyboard = [
 
 function sendToBot(data) {
   const winnerText = data.winner
-    ? `🐉🐉🐉🐉🐉🐉🐉🐉🐉🐉🐉🐉🐉🐉🐉🐉🐉🐉🐉🐉🐉🐉🐉🐉🐉🐉🐉🐉🐉
+    ? `${generateEmojis(data.lottery_value)}
 
 
 🏆🏆 __*WE HAVE A WINNER*__ 🏆🏆
@@ -73,7 +78,7 @@ You won the lottery and have been rewarded with ${parseToMarkdown(
         (data.current_jackpot * data.eth_usd_price).toFixed(2)
       )}\\)
         `
-    : `🐉🐉🐉🐉🐉🐉🐉🐉🐉🐉🐉🐉🐉🐉🐉
+    : `${generateEmojis(data.lottery_value)}
 
 🥲Not a winner🥲
 Better luck winning next time\\!🤞🏼`;
@@ -98,13 +103,13 @@ Better luck winning next time\\!🤞🏼`;
 
 *Chances of Winning:* ${data.lottery_percentage}%
 
-*Paid:* ${parseToMarkdown(data.eth.toFixed(4))} ETH \\($${parseToMarkdown(
+*🧾Paid:* ${parseToMarkdown(data.eth.toFixed(4))} ETH \\($${parseToMarkdown(
     (data.eth * data.eth_usd_price).toFixed(4)
   )}\\)
-*Bought:* ${parseToMarkdown(data.no_rush.toFixed(4))} RUSH
+*💵Bought:* ${parseToMarkdown(data.no_rush.toFixed(4))} RUSH
 
-*$RUSH Price:* $${parseToMarkdown(data.rush_usd)}
-*Market Cap:* $${parseToMarkdown(
+*💲Price:* $${parseToMarkdown(data.rush_usd)}
+*💰Market Cap:* $${parseToMarkdown(
     data.marketcap.toLocaleString("en-US", {
       minimumFractionDigits: 2,
       maximumFractionDigits: 2,
@@ -187,8 +192,8 @@ function sendIdleMessage(data) {
     })
   )}\\)
 
-*$RUSH Price:* $${parseToMarkdown(data.rush_usd.toFixed(2))}
-*Market Cap:* $${parseToMarkdown(
+*💲Price:* $${parseToMarkdown(data.rush_usd.toFixed(3))}
+*💰Market Cap:* $${parseToMarkdown(
     data.marketcap.toLocaleString("en-US", {
       minimumFractionDigits: 2,
       maximumFractionDigits: 2,
