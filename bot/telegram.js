@@ -65,7 +65,7 @@ const inlineKeyboard = [
 
 function sendToBot(data) {
   const winnerText = data.winner
-    ? `${generateEmojis(data.lottery_value)}
+    ? `${generateEmojis(data.usd_spent)}
 
 
 🏆🏆 __*WE HAVE A WINNER*__ 🏆🏆
@@ -78,7 +78,7 @@ You won the lottery and have been rewarded with ${parseToMarkdown(
         (data.current_jackpot * data.eth_usd_price).toFixed(2)
       )}\\)
         `
-    : `${generateEmojis(data.lottery_value)}
+    : `${generateEmojis(data.usd_spent)}
 
 🥲Not a winner🥲
 Better luck winning next time\\!🤞🏼`;

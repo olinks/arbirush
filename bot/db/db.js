@@ -39,7 +39,7 @@ const createTable = () => {
       created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
       PRIMARY KEY (id)
     )`;
-  db.promise().query(sql, function (err) {
+  db.query(sql, function (err) {
     if (err) throw err;
     console.log("transactions table created");
     // end process
@@ -62,10 +62,8 @@ const addTransaction = async (data) => {
     transaction_hash: data.transaction_hash,
   };
   let sql = "INSERT INTO transactions SET ?";
-  db.promise().query(sql, transaction, (err, result) => {
-    if (err) throw err;
-    // console.log(result);
-  });
+  const [rows, fields] = await db.promise().query(sql, transaction);
+  return rows;
 };
 
 /**
