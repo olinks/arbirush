@@ -5,10 +5,10 @@
   "main": "index.js",
   "scripts": {
     "test": "mocha",
-    "build":"node index.js",
-    "start":"node index.js",
-    "devStart": "nodemon index.js",
-    "devPrice": "nodemon price.js"
+    "start": "node index.js",
+    "dev:start": "nodemon index.js",
+    "create:db": "cd db && node create_database.js",
+    "create:table": "cd db && node create_table.js"
   },
   "keywords": [],
   "author": "",
@@ -22,7 +22,7 @@
     "express": "^4.18.2",
     "form-data": "^4.0.0",
     "moralis": "^2.18.1",
-    "mysql": "^2.18.1",
+    "mysql2": "^3.2.4",
     "nodemon": "^2.0.22"
   },
   "devDependencies": {
