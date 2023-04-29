@@ -5,8 +5,8 @@
   "main": "index.js",
   "scripts": {
     "test": "mocha",
-    "start": "node index.js",
-    "dev": "nodemon index.js",
+    "start": "pm2 start ecosystem.config.js --env production",
+    "dev": "pm2 start ecosystem.config.js --env development",
     "create:db": "cd db && node create_database.js",
     "create:table": "cd db && node create_table.js"
   },
