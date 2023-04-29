@@ -5,9 +5,11 @@ const cors = require("cors");
 const { startLottery } = require("./lottery");
 const app = express();
 const db = require("./db/db");
+const morganMiddleware = require("./middlewares/morgan.middleware");
 
 app.use(cors());
 app.use(express.json());
+app.use(morganMiddleware);
 app.use(bodyparser.urlencoded({ extended: true }));
 app.use(express.static(__dirname + "/static"));
 

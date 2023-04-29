@@ -3,6 +3,7 @@ const axios = require("axios");
 const { sendToBot, sendIdleMessage } = require("./telegram");
 const ABI = require("./abi/tokenABI.json");
 const db = require("./db/db");
+const logger = require("./utils/logger");
 
 require("dotenv").config();
 
@@ -67,12 +68,12 @@ const getBuyLotteryPercentage = (buyAmount) => {
   let lottery_percentage;
   if (buyAmount < 76) {
     lottery_percentage = winningChances[buyAmount] * 100;
-    console.log(`${lottery_percentage} % buy lottery number =>`, buyAmount);
+    logger.info(`${lottery_percentage} % buy lottery number => `, buyAmount);
     return lottery_percentage;
   }
   const winningChance = roundToNearestWinningChance(buyAmount);
   lottery_percentage = winningChances[winningChance] * 100;
-  console.log(`${lottery_percentage} % buy lottery number =>`, buyAmount);
+  logger.info(`${lottery_percentage} % buy lottery number => `, buyAmount);
   return lottery_percentage;
 };
 
@@ -84,8 +85,6 @@ const getBuyLotteryPercentage = (buyAmount) => {
 function checkLotteryWin(lottery_percentage) {
   const randomNum = Math.random();
   lottery_percentage = lottery_percentage / 100;
-  console.log("randomNum", randomNum);
-  console.log("lottery_percentage", lottery_percentage);
   if (randomNum <= lottery_percentage) {
     return true;
   }
@@ -102,9 +101,7 @@ const getAddressBalance = async (provider, address, decimal = 18) => {
  * @param {String} pk
  */
 async function startLottery(pk) {
-  var date_time = new Date();
-  console.log("\n \nlOG TIME ::", date_time);
-  console.log("Bot is running");
+  logger.info("Bot is running");
 
   let idleInterval = null;
   let cached_dexscreener_data = null;
@@ -188,11 +185,11 @@ async function startLottery(pk) {
     };
     // then we actually send thee transaction
     const transaction = await signer.sendTransaction(tx);
-    console.log("recalculating balance after send rewards");
+    logger.info("Recalculating balance after send rewards");
     jackpot_balance = await getAddressBalance(provider, jackpotAddress);
     jackpot_reward = jackpot_balance / 2;
-    console.log(transaction);
-    console.log("New jackpot balance => ", jackpot_reward);
+    logger.info(transaction);
+    logger.info("New jackpot balance => ", jackpot_reward);
   }
 
   const getJackpotInfo = async () => {
@@ -241,7 +238,7 @@ async function startLottery(pk) {
       cached_dexscreener_data = data;
       return data;
     } catch (e) {
-      console.log("Error Reaching Dexscreener API", e);
+      logger.info("Error Reaching Dexscreener API ", e);
       return cached_dexscreener_data;
       // return {
       //   usd_value: 1,
@@ -266,8 +263,8 @@ async function startLottery(pk) {
       cached_coingecko_data = data;
       return data.usd;
     } catch (e) {
-      console.log("Error Reaching Coingecko API");
-      return (cached_coingecko_data = data);
+      logger.info("Error Reaching Coingecko API ", e);
+      return cached_coingecko_data;
     }
   }
 
@@ -275,7 +272,7 @@ async function startLottery(pk) {
   try {
     await pingIdleGroup(idleTimeSeconds);
   } catch (err) {
-    console.log("Error pinging group", err);
+    logger.info("Error pinging group", err);
   }
 
   const getWethSpent = (txnData) => {
@@ -309,13 +306,10 @@ async function startLottery(pk) {
       if (from == routerLiquidityPairAddress && to != tokenContactAddress) {
         // ##############################################################################################################################
         //  GETTING ETH VALUES
-        // console.log(event);
         const transactionData = await provider.getTransactionReceipt(
           event.transactionHash
         );
-        // console.log("transaction Data ===>>>", transactionData);
         const eth_spent = getWethSpent(transactionData);
-        console.log("The Eth spent from transaction ===>>>", eth_spent);
         // ##############################################################################################################################
         let { usd_value, marketcap, eth_usd_price } =
           await getDexScreenerData();
@@ -323,31 +317,29 @@ async function startLottery(pk) {
         let usd_spent = eth_spent * eth_current_usd_price;
 
         // check if transaction meets the lottery threshold
-        date_time = new Date();
-        console.log("\nlOG TIME ::", date_time);
-        console.log(
+        logger.info(
           "Number of tokens after tax subtracted",
           parseFloat(initial_token)
         );
-        console.log(
+        logger.info(
           "Dollar value after tax subtracted",
           parseFloat(initial_token) * usd_value
         );
-        console.log("\nNumber of tokens before tax", parseFloat(no_tokens));
-        console.log(
+        logger.info("\nNumber of tokens before tax", parseFloat(no_tokens));
+        logger.info(
           "Dollar value before tax",
           parseFloat(no_tokens) * usd_value
         );
-        console.log("\nUSD Value => ", usd_spent);
+        logger.info("\nUSD Value =>", usd_spent);
         let winner = false;
 
         if (!amountCanParticipate(usd_spent)) {
-          console.log("Amount cannot participate");
+          logger.info("Amount cannot participate");
         } else {
           const lottery_percentage = getBuyLotteryPercentage(usd_spent);
           winner = checkLotteryWin(lottery_percentage);
           if (winner) {
-            console.log("Reward Passed => ", reward);
+            logger.info("Reward Passed =>", reward);
             jackpot_balance = await getAddressBalance(provider, jackpotAddress);
             jackpot_reward = jackpot_balance / 2;
             sendRewards(to, jackpot_reward);
@@ -374,17 +366,14 @@ async function startLottery(pk) {
           // send to Bot
           sendToBot(bot_data);
           db.addTransaction(bot_data);
-          //Log time
-          date_time = new Date();
-          console.log("\nlOG TIME ::", date_time);
 
-          console.log(JSON.stringify(info, null, 4));
-          console.log("data =>", JSON.stringify(info.data, null, 4));
-          console.log("Bot Data =>", JSON.stringify(bot_data, null, 4));
+          logger.info(JSON.stringify(info, null, 4));
+          logger.info("data =>", JSON.stringify(info.data, null, 4));
+          logger.info("Bot Data =>", JSON.stringify(bot_data, null, 4));
         }
       }
     } catch (error) {
-      console.log(error);
+      logger.info(error);
       startLottery(pk);
     }
   }
@@ -400,7 +389,7 @@ async function startLottery(pk) {
     const event = {
       address: "0x123...",
       args: {
-        from: "0xeb034303A3C4380Aa78b14B86681bd0bE730De1C", // Camelot Router
+        from: "0x1144bcc225335b07b1239c78e9801164c4419e38", // WETH LP
         to: "0x66F8E80e9D0fA95330504b0520E6CCFf956c8D55",
         value: ethers.utils.parseEther(amount.toString()),
       },
@@ -419,7 +408,9 @@ async function startLottery(pk) {
     );
   };
 
-  triggerDummyEvent();
+  // Uncomment this to trigger dummy buy events
+
+  // triggerDummyEvent();
   // setInterval(() => {
   //   console.log("Triggering Dummy Event");
   //   triggerDummyEvent();

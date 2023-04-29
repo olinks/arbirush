@@ -6,7 +6,7 @@
   "scripts": {
     "test": "mocha",
     "start": "node index.js",
-    "dev:start": "nodemon index.js",
+    "dev": "nodemon index.js",
     "create:db": "cd db && node create_database.js",
     "create:table": "cd db && node create_table.js"
   },
@@ -21,9 +21,13 @@
     "ethers": "^5.4",
     "express": "^4.18.2",
     "form-data": "^4.0.0",
+    "lodash": "^4.17.21",
     "moralis": "^2.18.1",
+    "morgan": "^1.10.0",
     "mysql2": "^3.2.4",
-    "nodemon": "^2.0.22"
+    "nodemon": "^2.0.22",
+    "triple-beam": "^1.3.0",
+    "winston": "^3.8.2"
   },
   "devDependencies": {
     "chai": "^4.3.7",

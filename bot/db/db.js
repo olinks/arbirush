@@ -1,6 +1,8 @@
 const mysql = require("mysql2");
 const { env } = require("../helpers");
 
+const logger = require("../utils/logger");
+
 const db = mysql.createPool({
   host: env.get("DB_HOST"),
   user: env.get("DB_USER"),
@@ -10,7 +12,7 @@ const db = mysql.createPool({
 
 db.getConnection((err, connection) => {
   if (err) throw err;
-  console.log("Connected to database");
+  logger.info("Connected to database");
 });
 
 // Create the initial database

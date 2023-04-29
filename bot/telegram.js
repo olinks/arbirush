@@ -2,6 +2,8 @@ const axios = require("axios");
 const path = require("path");
 const fs = require("fs");
 const FormData = require("form-data");
+const logger = require("./utils/logger");
+
 require("dotenv").config();
 
 function parseToMarkdown(text) {
@@ -165,11 +167,10 @@ Better luck winning next time\\!🤞🏼`;
       { headers: formData.getHeaders() }
     )
     .then((res) => {
-      console.log("Telegram message sent");
+      logger.info("Telegram message sent");
     })
     .catch((err) => {
-      console.log("Telegram message not sent");
-      console.log(err);
+      logger.error("Telegram message not sent", err);
     });
 }
 
@@ -242,11 +243,10 @@ function sendIdleMessage(data) {
       { headers: formData.getHeaders() }
     )
     .then((res) => {
-      console.log("Telegram message sent");
+      logger.info("Idle Telegram message sent");
     })
     .catch((err) => {
-      console.log("Telegram message not sent");
-      console.log(err);
+      logger.error("Telegram message not sent", err);
     });
 }
 
@@ -296,8 +296,8 @@ const getVideoId = async (videoName) => {
 
   axios
     .post(url, formData)
-    .then((data) => console.log(data.data.result.video.file_id))
-    .catch((error) => console.error(error));
+    .then((data) => logger.info(data.data.result.video.file_id))
+    .catch((error) => logger.error(error));
 };
 
 // getVideoId("intro-vid.mp4");
