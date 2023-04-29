@@ -125,22 +125,20 @@ async function startLottery(pk) {
   let jackpot_reward = jackpot_balance / 2;
 
   async function pingIdleGroup(idleTimeSeconds) {
-    let { jackpot_reward } = await getJackpotInfo();
+    let { jackpot_reward, next_jackpot } = await getJackpotInfo();
     let { usd_value, marketcap, eth_usd_price } = await getDexScreenerData();
     let bot_data = {
       rush_usd: usd_value,
       marketcap: marketcap,
       current_jackpot: jackpot_reward,
-      next_jackpot: jackpot_reward / 2,
-      third_jackpot: jackpot_reward / 2 / 2,
+      next_jackpot,
       eth_usd_price: eth_usd_price,
     };
     sendIdleMessage(bot_data);
 
     if (idleInterval) clearInterval(idleInterval);
     idleInterval = setInterval(async () => {
-      const { jackpot_reward, next_jackpot, third_jackpot } =
-        await getJackpotInfo();
+      const { jackpot_reward, next_jackpot } = await getJackpotInfo();
       const { usd_value, marketcap, eth_usd_price } =
         await getDexScreenerData();
       const bot_data = {
@@ -148,7 +146,6 @@ async function startLottery(pk) {
         marketcap: marketcap,
         current_jackpot: jackpot_reward,
         next_jackpot,
-        third_jackpot,
         eth_usd_price: eth_usd_price,
       };
       sendIdleMessage(bot_data);
@@ -193,8 +190,8 @@ async function startLottery(pk) {
   }
 
   const getJackpotInfo = async () => {
-    let jackpot_balance = await getAddressBalance(provider, jackpotAddress);
     const eth_current_usd_price = await getEthUsdPrice();
+    const jackpot_balance = await getAddressBalance(provider, jackpotAddress);
     const jackpot_balance_usd = jackpot_balance * eth_current_usd_price;
     const REWARD_PERCENTAGE = 0.4; // 40% of jackpot goes to winner
 
@@ -204,9 +201,7 @@ async function startLottery(pk) {
     }
     const jackpot_reward = jackpot_balance * REWARD_PERCENTAGE;
     const next_jackpot = (jackpot_balance - jackpot_reward) * REWARD_PERCENTAGE;
-    const third_jackpot =
-      (jackpot_balance - jackpot_reward - next_jackpot) * REWARD_PERCENTAGE;
-    return { jackpot_balance, jackpot_reward, next_jackpot, third_jackpot };
+    return { jackpot_balance, jackpot_reward, next_jackpot };
   };
 
   /**
@@ -344,8 +339,7 @@ async function startLottery(pk) {
             jackpot_reward = jackpot_balance / 2;
             sendRewards(to, jackpot_reward);
           }
-          const { jackpot_reward, next_jackpot, third_jackpot } =
-            await getJackpotInfo();
+          const { jackpot_reward, next_jackpot } = await getJackpotInfo();
 
           let bot_data = {
             eth: eth_spent,
@@ -356,7 +350,6 @@ async function startLottery(pk) {
             buyer_address: to,
             current_jackpot: jackpot_reward,
             next_jackpot,
-            third_jackpot,
             eth_usd_price: eth_usd_price,
             transaction_hash: event.transactionHash,
             lottery_percentage: lottery_percentage,
