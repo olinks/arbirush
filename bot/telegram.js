@@ -257,12 +257,9 @@ const getVideoId = async (videoName) => {
   return axios
     .post(url, formData)
     .then((data) => {
-      console.log(
-        "Sent Video => %s id: %s",
-        videoName,
-        data.data.result.video.file_id
-      );
-      return data.data.result.video.file_id;
+      return {
+        [videoName]: data.data.result.video.file_id,
+      };
     })
     .catch((error) => console.error(error));
 };
