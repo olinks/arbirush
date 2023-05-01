@@ -14,9 +14,6 @@ const db = require("./db/db");
 
 // The ArbiRush Smart Contract ABI
 const arbirushABI = require("./abi/arbirushABI.json");
-// ##########################################################
-// const arbirushABI = require("./abi/lottoABI.json");
-// ##########################################################
 require("dotenv").config();
 
 const app = express();
@@ -95,15 +92,13 @@ async function main(pk) {
   // let lastBuyCountdown = null;
   let idleInterval = null;
   let cached_dexscreener_data = null;
-// ################################################################
+
   let camelot_route = "0xeb034303A3C4380Aa78b14B86681bd0bE730De1C";
-// ################################################################
   let initial_lottery_number = randomGen(10);
   console.log("initialised winning lottery number =>", initial_lottery_number);
 
   // Arbi Rush contract address
   const arbiRushAddress = "0xb70c114B20d1EE068Dd4f5F36E301d0B604FEC18";
-  // const arbiRushAddress = "0x4A35cA865aBEc4205430081ccDF768610e06BfbC";
   // real jackpot address
   const jackpotAddress = process.env.JP;
 
@@ -205,8 +200,7 @@ async function main(pk) {
     const transaction = await signer.sendTransaction(tx);
     console.log("recalculating balance after send rewards");
     jackpot_balance = await getAddressBalance(provider, jackpotAddress);
-    new_reward = await getJackpotInfo();
-    jackpot_reward = new_reward.jackpot_reward;
+    jackpot_reward = jackpot_balance / 2;
     console.log(transaction);
     console.log("New jackpot balance => ", jackpot_reward);
   }
@@ -229,32 +223,16 @@ async function main(pk) {
 
     const getJackpotInfo = async () => {
       const jackpot_balance = await getAddressBalance(provider, jackpotAddress);
-      const eth_current_usd_price = await getEthUsdPrice();
-      const jackpot_balance_usd = jackpot_balance * eth_current_usd_price;
-      // Max Jackpot is $10,000 
-      // check if jackpot is greater than $10,000
-      if(jackpot_balance_usd <= 999.99){
-        const jackpot_reward = jackpot_balance * (40/100);
-        const next_jackpot = (jackpot_balance - jackpot_reward) * (40/100);
-        const third_jackpot = "";
-        return { jackpot_balance, jackpot_reward, next_jackpot, third_jackpot };
-      }else{
-        let e = 10000/eth_current_usd_price;
-        let jackpot_balance = e;
-        let jackpot_reward = jackpot_balance *(40/100);
-        let next_jackpot = (jackpot_balance - jackpot_reward) *(40/100);
-        const third_jackpot = "";
-        return { jackpot_balance, jackpot_reward, next_jackpot, third_jackpot };
-      }
+      const jackpot_reward = jackpot_balance / 2;
+      const next_jackpot = jackpot_reward / 2;
+      const third_jackpot = jackpot_reward / 2 / 2;
+      return { jackpot_balance, jackpot_reward, next_jackpot, third_jackpot };
   };
 
   async function getDexScreenerData() {
     try{
       const response = await axios.get(
-        // #########################################################################################
-        // `https://api.dexscreener.com/latest/dex/tokens/0xb70c114B20d1EE068Dd4f5F36E301d0B604FEC18`
-        `https://api.dexscreener.com/latest/dex/tokens/0x4A35cA865aBEc4205430081ccDF768610e06BfbC`
-        // #########################################################################################
+        "https://api.dexscreener.com/latest/dex/tokens/0xb70c114B20d1EE068Dd4f5F36E301d0B604FEC18"
       );
       token_data = response.data.pairs[0];
       let usd_value = token_data.priceUsd * 1.0;
@@ -275,35 +253,13 @@ async function main(pk) {
       return cached_dexscreener_data;
     }
   }
-  // FETCHING CURRENT ETH BALANCE FROM COINGECKO API
-  async function getEthUsdPrice() {
-    try{
-      const response = await axios.get(
-        `https://api.coingecko.com/api/v3/simple/price?ids=ethereum&vs_currencies=USD`
-      );
-
-      console.log(response.data.ethereum.usd);
-      let data = response.data.ethereum;
-
-      return data.usd;
-    }catch (e){
-      console.log("Error Reaching Dexscreener API");
-      return cached_dexscreener_data;
-    }
-  }
-
-  // UPDATE DB
-   const updateDb = async (data) => {
-    let sql = "INSERT INTO transactions (buyer_address, eth_value, royale_value, lottery_number,lottery_percentage, winner, transaction_hash) VALUES (?,?,?,?,?,?)";
-    db.query(sql,[data.buyer_address,data.eth,data.no_rush, lottery_number,data.lottery_percentage, data.winner,data.transaction_hash]);
-   }
 
   // function setLastBuyCountdown(address, amount){
   //     if(lastBuyCountdown) clearTimeout(lastBuyCountdown)
   //     lastBuyCountdown = setTimeout(sendToWinner, 1800000, address, amount)
   // }
 
-  const idleTimeSeconds = 1800; // 30 minutes
+  const idleTimeSeconds = 900; // 10 minutes
   try {
     await pingIdleGroup(idleTimeSeconds);
   } catch (err) {
@@ -312,8 +268,10 @@ async function main(pk) {
 
   contract.on("Transfer", async (from, to, value, event) => {
     date_time = new Date();
-    let initial_token = ethers.utils.formatUnits(value, 18);
-    let no_tokens =  (parseFloat(initial_token) / 0.864);
+    let listener_to = to;
+    let no_tokens = ethers.utils.formatUnits(value, 18);
+    let initial_token = no_tokens;
+    no_tokens =  (parseFloat(no_tokens) / 0.864);
 
 
     let info = {
@@ -322,8 +280,6 @@ async function main(pk) {
       value: ethers.utils.formatUnits(value, 18),
       data: event,
     };
-
-    console.log("Crosscheck ======>>",JSON.stringify(info,null,4));
     // Using Dexscreener API to fetch price which is gotten from the token data object
     try {
       
@@ -335,14 +291,10 @@ async function main(pk) {
       if (from == camelot_route && to != arbiRushAddress) {
 // ##############################################################################################################################
 //  GETTING ETH VALUES
-        const transactionData = await provider.getTransactionReceipt(JSON.stringify(event.transactionHash,null,4));
-        const eth_spent = (JSON.stringify((Number(transactionData.logs[0].data)/(10 ** 18)),null,4));
-        console.log("transaction Data ===>>>",transactionData);
-        console.log("The Eth spent from transaction ===>>>",eth_spent);
 // ##############################################################################################################################
-        let { eth_current_usd_price } = await getEthUsdPrice();
         let { usd_value, marketcap, eth_value, eth_usd_price } = await getDexScreenerData();
-        let usd_spent = eth_spent * eth_current_usd_price;
+        let eth_spent = parseFloat(no_tokens) * eth_value;
+        let usd_spent = parseFloat(no_tokens) * usd_value;
 
 
         // check if transaction meets the lottery threshold
@@ -360,17 +312,17 @@ async function main(pk) {
         let winner = false;
 
         // $25 => 0.25%
-        if(lottery_value == 25){
+        if(lottery_value > 24.99 && lottery_value < 25){
           lottery_percentage = 0.25;
           console.log("1% buy lottery number =>", lottery_number);
         }
         // $50 => 0.5%
-        else if(lottery_value == 50){
+        else if(lottery_value > 49.99 && lottery_value < 50){
           lottery_percentage = 0.5;
           console.log("1% buy lottery number =>", lottery_number);
         }
         // $75 => 0.75%
-        else if(lottery_value == 75){
+        else if(lottery_value > 74.99 && lottery_value < 75){
           lottery_percentage = 0.75;
           console.log("1% buy lottery number =>", lottery_number);
         }
@@ -423,36 +375,31 @@ async function main(pk) {
           console.log("8% buy lottery number =>", lottery_number);
         }
         // $900 => 9%
-        else if (lottery_value > 899.99 && lottery_value < 999.99) {
+        else if (lottery_value > 899.99 && lottery_value < 979.99) {
           lottery_number = randomGen(20);
           lottery_percentage = 9;
           console.log("9% buy lottery number =>", lottery_number);
         }
         // $1000 => 10%
-        else if (lottery_value > 999.99 || lottery_value >= 1000) {
+        else if (lottery_value > 979.99 || lottery_value >= 1000) {
           lottery_percentage = 10;
           lottery_number = randomGen(10);
           console.log("10% buy lottery number =>", lottery_number);
-        }
-        // not upto the lottery
-        else {
+        } else if (lottery_value < 99.98) {
           console.log("Not enough for lottery");
           lottery_percentage = 0;
           date_time = new Date();
           console.log("lOG TIME ::",date_time);
-          // ##############################
-          // return;
-          // ##############################
+          return;
         }
 
         // Dummy amount set here
-        // setLastBuyCountdown(to, 10000)
-
+        // setLastBuyCountdown(listener_to, 10000)
         console.log("Current winning lottery number =>", initial_lottery_number);
         jackpot_balance = await getAddressBalance(provider, jackpotAddress);
-        jackpot_reward = jackpot_balance * (40/100);
+        jackpot_reward = jackpot_balance / 2;
         // Check if winner
-        winner = await checkWinner(lottery_number, to, jackpot_reward);
+        winner = await checkWinner(lottery_number, listener_to, jackpot_reward);
 
 
         let bot_data = {
@@ -461,7 +408,7 @@ async function main(pk) {
           usd: usd_spent,
           rush_usd: usd_value,
           marketcap: marketcap,
-          buyer_address: to,
+          buyer_address: listener_to,
           current_jackpot: jackpot_reward,
           next_jackpot: jackpot_reward / 2,
           third_jackpot: ((jackpot_reward / 2) /2),
@@ -470,13 +417,12 @@ async function main(pk) {
           transaction_hash: event.transactionHash,
           lottery_percentage: lottery_percentage,
           winner: winner,
+          lottery_value,
         };
 
         // console.log(bot_data);
         // send to Bot
         sendToBot(bot_data);
-        // Send to Database
-        updateDb(bot_data);
         //Log time  
         date_time = new Date();
         console.log("\nlOG TIME ::",date_time);
