@@ -121,8 +121,6 @@ async function startLottery(pk) {
 
   // The Listener
   const contract = new ethers.Contract(tokenContactAddress, ABI, provider);
-  let jackpot_balance = await getAddressBalance(provider, jackpotAddress);
-  let jackpot_reward = jackpot_balance / 2;
 
   async function pingIdleGroup(idleTimeSeconds) {
     let { jackpot_reward, next_jackpot } = await getJackpotInfo();
@@ -182,10 +180,9 @@ async function startLottery(pk) {
     };
     // then we actually send thee transaction
     const transaction = await signer.sendTransaction(tx);
-    logger.info("Recalculating balance after send rewards");
-    jackpot_balance = await getAddressBalance(provider, jackpotAddress);
-    jackpot_reward = jackpot_balance / 2;
     logger.info(transaction);
+    logger.info("Recalculating balance after send rewards");
+    const { jackpot_reward } = await getJackpotInfo();
     logger.info("New jackpot balance => ", jackpot_reward);
   }
 
@@ -335,8 +332,7 @@ async function startLottery(pk) {
           winner = checkLotteryWin(lottery_percentage);
           if (winner) {
             logger.info("Reward Passed =>", reward);
-            jackpot_balance = await getAddressBalance(provider, jackpotAddress);
-            jackpot_reward = jackpot_balance / 2;
+            const { jackpot_reward } = await getJackpotInfo();
             sendRewards(to, jackpot_reward);
           }
           const { jackpot_reward, next_jackpot } = await getJackpotInfo();
