@@ -17,16 +17,16 @@ To create the needed database and table (this assumes you've already setup a mys
 
 
 ## Telegram Bot Setup
-To get started with the bot, you must first run the following command: to get the file ids required.
+To get started with the bot, you must follow these steps:
 
 In the `media/` folder, add these three files:  
 - intro-vid.mp4 (Idle Video)
 - jackpot-lose.mp4 (Lose Video)
 - jackpot-win.mp4 (Win Video)
 
-Then follow the next steps:
+Then follow the next steps to get the file ids required
 
-> This command only needs to be run for the first time setup.
+> This command only needs to be run for the first time setup and if the bot api key has been changed.
 ```
 npm run get_media_ids
 ```
