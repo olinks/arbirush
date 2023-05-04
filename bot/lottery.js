@@ -275,7 +275,7 @@ async function startLottery(pk) {
   };
 
   async function transferEventHandler(from, to, value, event) {
-    date_time = new Date();
+    logger.info("Event Caught =>", from, to, value, event);
     const TAX_FEE = 0.136; // 13.6% tax fee
     const TAX_FEE_REVERSE = 1 - TAX_FEE;
     const TOKEN_DECIMALS = 9;
@@ -326,7 +326,7 @@ async function startLottery(pk) {
         let winner = false;
 
         if (!amountCanParticipate(usd_spent)) {
-          logger.info("Amount cannot participate");
+          logger.info("Amount cannot participate =>", usd_spent);
         } else {
           const lottery_percentage = getBuyLotteryPercentage(usd_spent);
           winner = checkLotteryWin(lottery_percentage);
@@ -353,7 +353,7 @@ async function startLottery(pk) {
           };
 
           // send to Bot
-          sendToBot(bot_data);
+          await sendToBot(bot_data);
           db.addTransaction(bot_data);
 
           logger.info(JSON.stringify(info, null, 4));
