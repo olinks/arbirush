@@ -71,7 +71,7 @@ async function sendToBot(data) {
 
 
 🏆🏆 __*WE HAVE A WINNER*__ 🏆🏆
-*Chances of winning*: *${data.lottery_percentage}*%
+*Chances of winning*: *${parseToMarkdown(data.lottery_percentage)}*%
 
 🐉🏆Congratulations\\!
 You won the lottery and have been rewarded with ${parseToMarkdown(
@@ -103,7 +103,7 @@ Better luck winning next time\\!🤞🏼`;
     })
   )}\\)
 
-*Chances of Winning:* ${data.lottery_percentage}%
+*Chances of Winning:* ${parseToMarkdown(data.lottery_percentage)}%
 
 *🧾Paid:* ${parseToMarkdown(data.eth.toFixed(4))} ETH \\($${parseToMarkdown(
     (data.eth * data.eth_usd_price).toFixed(4)
@@ -155,6 +155,7 @@ Better luck winning next time\\!🤞🏼`;
     logger.info("Telegram message sent");
     return result;
   } catch (err) {
+    console.log(err);
     logger.error("Telegram message not sent", err);
   }
 }
