@@ -40,7 +40,7 @@ winston.addColors(colors);
 
 function formatObject(param) {
   if (isObject(param)) {
-    return JSON.stringify(param);
+    return JSON.stringify(param, null, 4);
   }
   return param;
 }
