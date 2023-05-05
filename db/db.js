@@ -64,8 +64,12 @@ const addTransaction = async (data) => {
     transaction_hash: data.transaction_hash,
   };
   let sql = "INSERT INTO transactions SET ?";
-  const [rows, fields] = await db.promise().query(sql, transaction);
-  return rows;
+  try {
+    const [rows, fields] = await db.promise().query(sql, transaction);
+    return rows;
+  } catch (e) {
+    logger.error("Error adding transaction", e);
+  }
 };
 
 /**
@@ -91,20 +95,35 @@ const getTransactions = async (filters, limit) => {
     sql += ` LIMIT ?`;
     values.push(limit);
   }
-  const [rows, fields] = await db.promise().query(sql, values);
-  return rows;
+  try {
+    const [rows, fields] = await db.promise().query(sql, values);
+    return rows;
+  } catch (e) {
+    logger.error("Error getting transactions", e);
+    throw new Error("Error getting transactions");
+  }
 };
 
 const getTransactionByHash = async (hash) => {
   let sql = "SELECT * FROM transactions WHERE transaction_hash = ?";
-  const [rows, fields] = await db.promise().query(sql, [hash]);
-  return rows;
+  try {
+    const [rows, fields] = await db.promise().query(sql, [hash]);
+    return rows;
+  } catch (e) {
+    logger.error("Error getting transaction by hash", e);
+    throw new Error("Error getting transaction by hash");
+  }
 };
 
 const getTransactionsByAddress = async (address) => {
   let sql = "SELECT * FROM transactions WHERE buyer_address = ?";
-  const [rows, fields] = await db.promise().query(sql, [address]);
-  return rows;
+  try {
+    const [rows, fields] = await db.promise().query(sql, [address]);
+    return rows;
+  } catch (e) {
+    logger.error("Error getting transactions by address", e);
+    throw new Error("Error getting transactions by address");
+  }
 };
 
 module.exports = {

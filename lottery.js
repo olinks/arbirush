@@ -338,7 +338,7 @@ async function startLottery(pk) {
 
           // send to Bot
           await sendToBot(bot_data);
-          db.addTransaction(bot_data);
+          await db.addTransaction(bot_data);
 
           logger.info(JSON.stringify(info, null, 4));
           logger.info("data =>", JSON.stringify(info.data, null, 4));
