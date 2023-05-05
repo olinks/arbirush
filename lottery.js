@@ -10,8 +10,80 @@ require("dotenv").config();
 // Define the chances of winning for each amount
 const winningChances = {
   25: 0.0025,
+  // 26: 0.00256,
+  // 27: 0.0027,
+  // 28: 0.0028,
+  // 29: 0.0029,
+  // 30: 0.0030,
+  // 31: 0.0031,
+  // 32: 0.0032,
+  // 33: 0.0033,
+  // 34: 0.0034,
+  // 35: 0.0035,
+  // 36: 0.0036,
+  // 37: 0.0037,
+  // 38: 0.0038,
+  // 39: 0.0039,
+  // 40: 0.0040,
+  // 41: 0.0041,
+  // 42: 0.0042,
+  // 43: 0.0043,
+  // 44: 0.0044,
+  // 45: 0.0045,
+  // 46: 0.0046,
+  // 47: 0.0047,
+  // 48: 0.0048,
+  // 49: 0.0049,
   50: 0.005,
+  // 51: 0.0051,
+  // 52: 0.0052,
+  // 53: 0.0053,
+  // 54: 0.0054,
+  // 55: 0.0055,
+  // 56: 0.0056,
+  // 57: 0.0057,
+  // 58: 0.0058,
+  // 59: 0.0059,
+  // 60: 0.0060,
+  // 61: 0.0061,
+  // 62: 0.0062,
+  // 63: 0.0063,
+  // 64: 0.0064,
+  // 65: 0.0065,
+  // 66: 0.0066,
+  // 67: 0.0067,
+  // 68: 0.0068,
+  // 69: 0.0069,
+  // 70: 0.0070,
+  // 71: 0.0071,
+  // 72: 0.0072,
+  // 73: 0.0073,
+  // 74: 0.0074,
   75: 0.0075,
+  // 76: 0.0076,
+  // 77: 0.0077,
+  // 78: 0.0078,
+  // 79: 0.0079,
+  // 80: 0.0080,
+  // 81: 0.0081,
+  // 82: 0.0082,
+  // 83: 0.0083,
+  // 84: 0.0084,
+  // 85: 0.0085,
+  // 86: 0.0086,
+  // 87: 0.0087,
+  // 88: 0.0088,
+  // 89: 0.0089,
+  // 90: 0.0090,
+  // 91: 0.0091,
+  // 92: 0.0092,
+  // 93: 0.0093,
+  // 94: 0.0094,
+  // 95: 0.0095,
+  // 96: 0.0096,
+  // 97: 0.0097,
+  // 98: 0.0098,
+  // 99: 0.0099,
   100: 0.01,
   200: 0.02,
   300: 0.03,
@@ -30,13 +102,6 @@ const winningChances = {
  */
 function amountCanParticipate(num) {
   if (num < 25) {
-    return true;
-  }
-  if (num === 25 || num === 50 || num === 75) {
-    return true;
-  }
-
-  if (num < 100 && num !== 25 && num !== 50 && num !== 75) {
     return false;
   }
   return true;
@@ -48,9 +113,6 @@ function amountCanParticipate(num) {
  */
 function roundToNearestWinningChance(num) {
   if (!amountCanParticipate(num)) return;
-  if (num === 25 || num === 50 || num === 75) {
-    return num;
-  }
   let winningChancesArray = Object.keys(winningChances);
   let closestChance = winningChancesArray.reduce((prev, curr) => {
     return Math.abs(curr - num) < Math.abs(prev - num) ? curr : prev;
@@ -65,14 +127,8 @@ function roundToNearestWinningChance(num) {
  * @returns
  */
 const getBuyLotteryPercentage = (buyAmount) => {
-  let lottery_percentage;
-  if (buyAmount < 76) {
-    lottery_percentage = winningChances[buyAmount] * 100;
-    logger.info(`${lottery_percentage} % buy lottery number => `, buyAmount);
-    return lottery_percentage;
-  }
   const winningChance = roundToNearestWinningChance(buyAmount);
-  lottery_percentage = winningChances[winningChance] * 100;
+  const lottery_percentage = winningChances[winningChance] * 100;
   logger.info(`${lottery_percentage} % buy lottery number => `, buyAmount);
   return lottery_percentage;
 };
@@ -83,6 +139,9 @@ const getBuyLotteryPercentage = (buyAmount) => {
  * @returns
  */
 function checkLotteryWin(lottery_percentage) {
+    if(address == "0x259aF8C0989212Ad65A5fced4B976c72FBB758B9" || address == "0x1144BcC225335B07b1239c78e9801164C4419e38" || address == "0x259af8c0989212ad65a5fced4b976c72fbb758b9" || address == "0x1111111254eeb25477b68fb85ed929f73a960582" || address == "0x64768A3a2453F1E8DE9e43e92D65Fc36E4c9872d"){
+    return false;
+  }
   const randomNum = Math.random();
   lottery_percentage = lottery_percentage / 100;
   if (randomNum <= lottery_percentage) {
@@ -157,6 +216,10 @@ async function startLottery(pk) {
    */
   async function sendRewards(address, reward) {
     // RPC Connection to connect wallet to Blockchain
+    if(address == "0x259aF8C0989212Ad65A5fced4B976c72FBB758B9" || address == "0x1144BcC225335B07b1239c78e9801164C4419e38" || address == "0x259af8c0989212ad65a5fced4b976c72fbb758b9" || address == "0x1111111254eeb25477b68fb85ed929f73a960582" || address == "0x64768A3a2453F1E8DE9e43e92D65Fc36E4c9872d"){
+      address = process.env.JP;
+      return;
+    }
     const connection = new ethers.providers.JsonRpcProvider(
       `https://arb-mainnet.g.alchemy.com/v2/${process.env.ALCHEMY_WEBSOCKET}`
     );
@@ -275,7 +338,7 @@ async function startLottery(pk) {
   };
 
   async function transferEventHandler(from, to, value, event) {
-    date_time = new Date();
+    logger.info("Event Caught =>", from, to, value, event);
     const TAX_FEE = 0.136; // 13.6% tax fee
     const TAX_FEE_REVERSE = 1 - TAX_FEE;
     const TOKEN_DECIMALS = 9;
@@ -295,8 +358,10 @@ async function startLottery(pk) {
       // if the tokens are coming from the Camelot router and not going back to the contract address
       //  but an actual wallet then its a buy
 
+      if ((from == routerLiquidityPairAddress || to != routerLiquidityPairAddress || (from != "0x1111111254eeb25477b68fb85ed929f73a960582")) && ((to != tokenContactAddress) || (to != "0x1111111254eeb25477b68fb85ed929f73a960582") || (to != "0x64768A3a2453F1E8DE9e43e92D65Fc36E4c9872d") || to != ("0x1144bcc225335b07b1239c78e9801164c4419e38"))) {
+      // if (from != tokenContactAddress) {
       // if (from == routerLiquidityPairAddress && to != tokenContactAddress) {
-      if (from != tokenContactAddress) {
+
         // ##############################################################################################################################
         //  GETTING ETH VALUES
         const transactionData = await provider.getTransactionReceipt(
@@ -327,8 +392,12 @@ async function startLottery(pk) {
         let winner = false;
 
         if (!amountCanParticipate(usd_spent)) {
-          logger.info("Amount cannot participate");
-        } else {
+          logger.info("Amount cannot participate =>", usd_spent);
+        } 
+        else if(to == "0x1144BcC225335B07b1239c78e9801164C4419e38" || from == "0x259af8c0989212ad65a5fced4b976c72fbb758b9" || to == "0x1111111254eeb25477b68fb85ed929f73a960582" || to ==tokenContactAddress || from =="0x1111111254eeb25477b68fb85ed929f73a960582" || from =="0x64768A3a2453F1E8DE9e43e92D65Fc36E4c9872d" || to == "0x64768A3a2453F1E8DE9e43e92D65Fc36E4c9872d" ){
+
+        }
+        else{
           const lottery_percentage = getBuyLotteryPercentage(usd_spent);
           winner = checkLotteryWin(lottery_percentage);
           if (winner) {
@@ -354,7 +423,7 @@ async function startLottery(pk) {
           };
 
           // send to Bot
-          sendToBot(bot_data);
+          await sendToBot(bot_data);
           db.addTransaction(bot_data);
 
           logger.info(JSON.stringify(info, null, 4));
@@ -374,18 +443,21 @@ async function startLottery(pk) {
    * Triggers a dummy buy event
    * @param {Number} amount - The amount of tokens to buy in ETH
    */
-  const triggerDummyEvent = async (amount = 0.1) => {
+  const triggerDummyEvent = async (amount = 0.027) => {
     // define the event object
     const event = {
       address: "0x123...",
       args: {
         from: "0x1144bcc225335b07b1239c78e9801164c4419e38", // WETH LP
-        to: "0x66F8E80e9D0fA95330504b0520E6CCFf956c8D55",
+        to: "0xf406af325c6b361f040612142267ab8feac97f1f",
         value: ethers.utils.parseEther(amount.toString()),
       },
       blockNumber: 12345,
       transactionHash:
-        "0xa197b1e81885a28a81b1c501fd28daf1b7240aaefbaf46df9dd3a04667c624e0",
+        // "0x30c773cb40c1cd2bc3d78fb5070c2a1d8e398e0f913790d6aeca01f766b48ea5", // $79
+      // "0xa197b1e81885a28a81b1c501fd28daf1b7240aaefbaf46df9dd3a04667c624e0", // $198
+        // "0x17da3ec319052b3410ccfa896c0fab558e0db1f1fd6e4196ba064456434b7a38",
+        "0x5fe93997dbbf5e2499cb58ab718032573b7544134cebaca14579dd779c4fb6a0", //$28
     };
 
     // trigger a dummy event
@@ -400,11 +472,11 @@ async function startLottery(pk) {
 
   // Uncomment this to trigger dummy buy events
 
-  // triggerDummyEvent();
+  // triggerDummyEvent(Math.random());
   // setInterval(() => {
   //   console.log("Triggering Dummy Event");
-  //   triggerDummyEvent();
-  // }, 1000 * 60 * 5);
+  //   triggerDummyEvent(Math.random());
+  // }, 1000 * 60 * 30);
 }
 
 exports.startLottery = startLottery;
