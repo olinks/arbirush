@@ -216,13 +216,50 @@ async function startLottery(pk) {
     } catch (e) {
       logger.info("Error Reaching Dexscreener API ", e);
       return cached_dexscreener_data;
-      // return {
-      //   usd_value: 1,
-      //   eth_value: 1,
-      //   marketcap: 1,
-      //   eth_usd_price: 1,
-      // };
     }
+  }
+
+  /**
+   * Check if the contract token is the one that is being transferred
+   * @param {Array} logs
+   * @returns
+   */
+  function checkTokenAddress(logs) {
+    // find log that have address of token contract and pair address in topics
+    let cc = logs.find((log) => log.address === tokenContactAddress);
+    logger.info("cc => ", cc);
+    const isToken = logs.some((log) => {
+      if (
+        log.address === tokenContactAddress &&
+        // the address gets appended by 0x000000000000000000000000, so we need to remove it
+        log.topics[1].replace("000000000000000000000000", "") ===
+          routerLiquidityPairAddress
+      ) {
+        return true;
+      }
+      return false;
+    });
+    return isToken;
+  }
+
+  /**
+   * Check if the address is excluded from the lottery.
+   * Only transactions done through the LP pair router are included
+   * @param {Array} logs
+   * @returns
+   */
+  function checkAddressIsExcluded(logs) {
+    const excludedAddresses = [
+      "0x1111111254eeb25477b68fb85ed929f73a960582",
+      "0x64768A3a2453F1E8DE9e43e92D65Fc36E4c9872d",
+    ];
+    // if an excluded address is in the logs, return true
+    for (let i = 0; i < logs.length; i++) {
+      if (excludedAddresses.includes(logs[i].address)) {
+        return true;
+      }
+    }
+    return false;
   }
 
   /**
@@ -259,7 +296,13 @@ async function startLottery(pk) {
   };
 
   async function transferEventHandler(from, to, value, event) {
-    logger.info("Event Caught =>", from, to, value, event);
+    const info = {
+      from: from,
+      to: to,
+      value: ethers.utils.formatUnits(value, 18),
+      data: event,
+    };
+    logger.info("Event Caught =>", info);
     const TAX_FEE = 0.136; // 13.6% tax fee
     const TAX_FEE_REVERSE = 1 - TAX_FEE;
     const TOKEN_DECIMALS = 9;
@@ -268,23 +311,22 @@ async function startLottery(pk) {
     // Initial token has a 12.4% tax on it, so we need to remove that
     let no_tokens = parseFloat(initial_token) / TAX_FEE_REVERSE;
 
-    let info = {
-      from: from,
-      to: to,
-      value: ethers.utils.formatUnits(value, 18),
-      data: event,
-    };
     // Using Dexscreener API to fetch price which is gotten from the token data object
     try {
       // if the tokens are coming from the Camelot router and not going back to the contract address
       //  but an actual wallet then its a buy
 
-      if (from == routerLiquidityPairAddress && to != tokenContactAddress) {
+      const transactionData = await provider.getTransactionReceipt(
+        event.transactionHash
+      );
+      if (
+        from == routerLiquidityPairAddress &&
+        to != tokenContactAddress &&
+        checkTokenAddress(transactionData.logs) &&
+        !checkAddressIsExcluded(transactionData.logs)
+      ) {
         // ##############################################################################################################################
         //  GETTING ETH VALUES
-        const transactionData = await provider.getTransactionReceipt(
-          event.transactionHash
-        );
         const eth_spent = getWethSpent(transactionData);
         // ##############################################################################################################################
         let { usd_value, marketcap, eth_usd_price } =
@@ -340,13 +382,11 @@ async function startLottery(pk) {
           await sendToBot(bot_data);
           await db.addTransaction(bot_data);
 
-          logger.info(JSON.stringify(info, null, 4));
-          logger.info("data =>", JSON.stringify(info.data, null, 4));
-          logger.info("Bot Data =>", JSON.stringify(bot_data, null, 4));
+          logger.info("Bot Data =>", bot_data);
         }
       }
     } catch (error) {
-      logger.info(error);
+      logger.error(error);
       startLottery(pk);
     }
   }
