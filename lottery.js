@@ -4,6 +4,7 @@ const { sendToBot, sendIdleMessage } = require("./telegram");
 const ABI = require("./abi/tokenABI.json");
 const db = require("./db/db");
 const logger = require("./utils/logger");
+const throttle = require("lodash/throttle");
 
 require("dotenv").config();
 
@@ -265,7 +266,7 @@ async function startLottery(pk) {
    *
    * @returns {Promise<number>}
    */
-  async function getEthUsdPrice() {
+  const getEthUsdPrice = throttle(async function () {
     try {
       const response = await axios.get(
         `https://api.coingecko.com/api/v3/simple/price?ids=ethereum&vs_currencies=USD`
@@ -277,7 +278,7 @@ async function startLottery(pk) {
       logger.info("Error Reaching Coingecko API ", e);
       return cached_coingecko_data;
     }
-  }
+  }, 1000 * 60);
 
   const idleTimeSeconds = 900; // 10 minutes
   try {
@@ -329,7 +330,7 @@ async function startLottery(pk) {
         // ##############################################################################################################################
         let { usd_value, marketcap, eth_usd_price } =
           await getDexScreenerData();
-        let eth_current_usd_price = await getEthUsdPrice();
+        const eth_current_usd_price = await getEthUsdPrice();
         let usd_spent = eth_spent * eth_current_usd_price;
 
         // check if transaction meets the lottery threshold
