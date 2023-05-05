@@ -318,8 +318,8 @@ async function startLottery(pk) {
         event.transactionHash
       );
       if (
-        from == routerLiquidityPairAddress &&
-        to != tokenContactAddress &&
+        from.toLowerCase() == routerLiquidityPairAddress.toLowerCase() &&
+        to.toLowerCase() != tokenContactAddress.toLowerCase() &&
         checkTokenAddress(transactionData.logs) &&
         !checkAddressIsExcluded(transactionData.logs)
       ) {
