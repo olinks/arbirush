@@ -172,7 +172,7 @@ async function startLottery(pk) {
 
   const getJackpotInfo = async () => {
     const eth_current_usd_price = await getEthUsdPrice();
-    const jackpot_balance = await getAddressBalance(provider, jackpotAddress);
+    let jackpot_balance = await getAddressBalance(provider, jackpotAddress);
     const jackpot_balance_usd = jackpot_balance * eth_current_usd_price;
     const REWARD_PERCENTAGE = 0.4; // 40% of jackpot goes to winner
 
