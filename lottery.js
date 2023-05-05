@@ -226,8 +226,6 @@ async function startLottery(pk) {
    */
   function checkTokenAddress(logs) {
     // find log that have address of token contract and pair address in topics
-    let cc = logs.find((log) => log.address === tokenContactAddress);
-    logger.info("cc => ", cc);
     const isToken = logs.some((log) => {
       if (
         log.address === tokenContactAddress &&
