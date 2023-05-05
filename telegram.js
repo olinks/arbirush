@@ -121,7 +121,7 @@ Better luck winning next time\\!🤞🏼`;
   const footerText = `
 *[👤Buyer](https://arbiscan.io/address/${data.buyer_address})* \\| *[🧾Transaction](https://arbiscan.io/tx/${data.transaction_hash})*
 
-*[💬Telegram](https://t.me/phoenixroyalecasino)* \\| *[💻Website](https://phoenixroyale.com)*
+*[💬Telegram](https://t.me/phoenixroyalecasino)* \\| *[🌐Website](https://phoenixroyale.com)*
 *[🐦Twitter](https://twitter.com/phoenixroyaleL2)* \\| *[📈Chart](https://www.dextools.io/app/en/arbitrum/pair-explorer/0x1144bcc225335b07b1239c78e9801164c4419e38)*
 
 *[💰Buy $ROYALE Here](https://www.sushi.com/swap?fromChainId=42161&fromCurrency=0x259aF8C0989212Ad65A5fced4B976c72FBB758B9&toChainId=42161&toCurrency=NATIVE&amount=12192.930462149)* \\| *[💻dApp](https://dapp.phoenixroyale.com)*
