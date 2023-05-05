@@ -4,6 +4,7 @@ const { sendToBot, sendIdleMessage } = require("./telegram");
 const ABI = require("./abi/tokenABI.json");
 const db = require("./db/db");
 const logger = require("./utils/logger");
+const throttle = require("lodash/throttle");
 
 require("dotenv").config();
 
@@ -32,13 +33,6 @@ function amountCanParticipate(num) {
   if (num < 25) {
     return false;
   }
-  if (num === 25 || num === 50 || num === 75) {
-    return true;
-  }
-
-  if (num < 100 && num !== 25 && num !== 50 && num !== 75) {
-    return false;
-  }
   return true;
 }
 /**
@@ -48,9 +42,6 @@ function amountCanParticipate(num) {
  */
 function roundToNearestWinningChance(num) {
   if (!amountCanParticipate(num)) return;
-  if (num === 25 || num === 50 || num === 75) {
-    return num;
-  }
   let winningChancesArray = Object.keys(winningChances);
   let closestChance = winningChancesArray.reduce((prev, curr) => {
     return Math.abs(curr - num) < Math.abs(prev - num) ? curr : prev;
@@ -65,14 +56,8 @@ function roundToNearestWinningChance(num) {
  * @returns
  */
 const getBuyLotteryPercentage = (buyAmount) => {
-  let lottery_percentage;
-  if (buyAmount < 76) {
-    lottery_percentage = winningChances[buyAmount] * 100;
-    logger.info(`${lottery_percentage} % buy lottery number => `, buyAmount);
-    return lottery_percentage;
-  }
   const winningChance = roundToNearestWinningChance(buyAmount);
-  lottery_percentage = winningChances[winningChance] * 100;
+  const lottery_percentage = winningChances[winningChance] * 100;
   logger.info(`${lottery_percentage} % buy lottery number => `, buyAmount);
   return lottery_percentage;
 };
@@ -188,7 +173,7 @@ async function startLottery(pk) {
 
   const getJackpotInfo = async () => {
     const eth_current_usd_price = await getEthUsdPrice();
-    const jackpot_balance = await getAddressBalance(provider, jackpotAddress);
+    let jackpot_balance = await getAddressBalance(provider, jackpotAddress);
     const jackpot_balance_usd = jackpot_balance * eth_current_usd_price;
     const REWARD_PERCENTAGE = 0.4; // 40% of jackpot goes to winner
 
@@ -232,13 +217,48 @@ async function startLottery(pk) {
     } catch (e) {
       logger.info("Error Reaching Dexscreener API ", e);
       return cached_dexscreener_data;
-      // return {
-      //   usd_value: 1,
-      //   eth_value: 1,
-      //   marketcap: 1,
-      //   eth_usd_price: 1,
-      // };
     }
+  }
+
+  /**
+   * Check if the contract token is the one that is being transferred
+   * @param {Array} logs
+   * @returns
+   */
+  function checkTokenAddress(logs) {
+    // find log that have address of token contract and pair address in topics
+    const isToken = logs.some((log) => {
+      if (
+        log.address === tokenContactAddress &&
+        // the address gets appended by 0x000000000000000000000000, so we need to remove it
+        log.topics[1].replace("000000000000000000000000", "") ===
+          routerLiquidityPairAddress
+      ) {
+        return true;
+      }
+      return false;
+    });
+    return isToken;
+  }
+
+  /**
+   * Check if the address is excluded from the lottery.
+   * Only transactions done through the LP pair router are included
+   * @param {Array} logs
+   * @returns
+   */
+  function checkAddressIsExcluded(logs) {
+    const excludedAddresses = [
+      "0x1111111254eeb25477b68fb85ed929f73a960582",
+      "0x64768A3a2453F1E8DE9e43e92D65Fc36E4c9872d",
+    ];
+    // if an excluded address is in the logs, return true
+    for (let i = 0; i < logs.length; i++) {
+      if (excludedAddresses.includes(logs[i].address)) {
+        return true;
+      }
+    }
+    return false;
   }
 
   /**
@@ -246,7 +266,7 @@ async function startLottery(pk) {
    *
    * @returns {Promise<number>}
    */
-  async function getEthUsdPrice() {
+  const getEthUsdPrice = throttle(async function () {
     try {
       const response = await axios.get(
         `https://api.coingecko.com/api/v3/simple/price?ids=ethereum&vs_currencies=USD`
@@ -258,7 +278,7 @@ async function startLottery(pk) {
       logger.info("Error Reaching Coingecko API ", e);
       return cached_coingecko_data;
     }
-  }
+  }, 1000 * 60);
 
   const idleTimeSeconds = 900; // 10 minutes
   try {
@@ -275,7 +295,13 @@ async function startLottery(pk) {
   };
 
   async function transferEventHandler(from, to, value, event) {
-    date_time = new Date();
+    const info = {
+      from: from,
+      to: to,
+      value: ethers.utils.formatUnits(value, 18),
+      data: event,
+    };
+    logger.info("Event Caught =>", info);
     const TAX_FEE = 0.136; // 13.6% tax fee
     const TAX_FEE_REVERSE = 1 - TAX_FEE;
     const TOKEN_DECIMALS = 9;
@@ -284,28 +310,27 @@ async function startLottery(pk) {
     // Initial token has a 12.4% tax on it, so we need to remove that
     let no_tokens = parseFloat(initial_token) / TAX_FEE_REVERSE;
 
-    let info = {
-      from: from,
-      to: to,
-      value: ethers.utils.formatUnits(value, 18),
-      data: event,
-    };
     // Using Dexscreener API to fetch price which is gotten from the token data object
     try {
       // if the tokens are coming from the Camelot router and not going back to the contract address
       //  but an actual wallet then its a buy
 
-      if (from == routerLiquidityPairAddress && to != tokenContactAddress) {
+      const transactionData = await provider.getTransactionReceipt(
+        event.transactionHash
+      );
+      if (
+        from.toLowerCase() == routerLiquidityPairAddress.toLowerCase() &&
+        to.toLowerCase() != tokenContactAddress.toLowerCase() &&
+        checkTokenAddress(transactionData.logs) &&
+        !checkAddressIsExcluded(transactionData.logs)
+      ) {
         // ##############################################################################################################################
         //  GETTING ETH VALUES
-        const transactionData = await provider.getTransactionReceipt(
-          event.transactionHash
-        );
         const eth_spent = getWethSpent(transactionData);
         // ##############################################################################################################################
         let { usd_value, marketcap, eth_usd_price } =
           await getDexScreenerData();
-        let eth_current_usd_price = await getEthUsdPrice();
+        const eth_current_usd_price = await getEthUsdPrice();
         let usd_spent = eth_spent * eth_current_usd_price;
 
         // check if transaction meets the lottery threshold
@@ -326,7 +351,7 @@ async function startLottery(pk) {
         let winner = false;
 
         if (!amountCanParticipate(usd_spent)) {
-          logger.info("Amount cannot participate");
+          logger.info("Amount cannot participate =>", usd_spent);
         } else {
           const lottery_percentage = getBuyLotteryPercentage(usd_spent);
           winner = checkLotteryWin(lottery_percentage);
@@ -353,16 +378,14 @@ async function startLottery(pk) {
           };
 
           // send to Bot
-          sendToBot(bot_data);
-          db.addTransaction(bot_data);
+          await sendToBot(bot_data);
+          await db.addTransaction(bot_data);
 
-          logger.info(JSON.stringify(info, null, 4));
-          logger.info("data =>", JSON.stringify(info.data, null, 4));
-          logger.info("Bot Data =>", JSON.stringify(bot_data, null, 4));
+          logger.info("Bot Data =>", bot_data);
         }
       }
     } catch (error) {
-      logger.info(error);
+      logger.error(error);
       startLottery(pk);
     }
   }
@@ -384,7 +407,8 @@ async function startLottery(pk) {
       },
       blockNumber: 12345,
       transactionHash:
-        "0xa197b1e81885a28a81b1c501fd28daf1b7240aaefbaf46df9dd3a04667c624e0",
+        "0x30c773cb40c1cd2bc3d78fb5070c2a1d8e398e0f913790d6aeca01f766b48ea5", // $79
+      // "0xa197b1e81885a28a81b1c501fd28daf1b7240aaefbaf46df9dd3a04667c624e0", // $198
     };
 
     // trigger a dummy event
@@ -399,12 +423,11 @@ async function startLottery(pk) {
 
   // Uncomment this to trigger dummy buy events
 
-  // triggerDummyEvent();
+  // triggerDummyEvent(Math.random());
   // setInterval(() => {
   //   console.log("Triggering Dummy Event");
-  //   triggerDummyEvent();
+  //   triggerDummyEvent(Math.random());
   // }, 1000 * 60 * 5);
 }
 
 exports.startLottery = startLottery;
-// 
